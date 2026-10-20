@@ -1,0 +1,588 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+
+
+<div class="page-actions" style="display:flex;justify-content:flex-end;gap:10px;margin-bottom:16px">
+  <button class="tb-btn" onclick="exportCSV()">⇩ Exporter CSV</button>
+  <button class="tb-btn primary" id="runBtn" onclick="runSimulation()">▷ Simuler</button>
+</div>
+
+<div class="breadcrumb">
+  <a href="{{ url_for('dashboard') }}">⌂ Tableau de bord</a>
+  <span>›</span>
+  <span style="color:var(--green);font-weight:500">◈ Monte-Carlo</span>
+</div>
+
+
+
+<style>
+    :root {
+      --green-bdr: #bbf7d0;
+    }
+
+    .page-actions .tb-btn:hover {
+      border-color: var(--green);
+      color: var(--green);
+    }
+
+    .page-actions .tb-btn.primary {
+      background: var(--green);
+      color: #fff;
+      border-color: var(--green);
+    }
+
+    .page-actions .tb-btn.primary:hover {
+      background: #15803d;
+    }
+
+  /* Breadcrumb */
+  .breadcrumb{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);margin-bottom:18px}
+  .breadcrumb a{color:var(--acc);text-decoration:none}
+  .breadcrumb a:hover{text-decoration:underline}
+
+  /* Panel */
+  .panel{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:20px}
+  .panel-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+  .panel-hdr h3{font-size:15px;font-weight:700}
+
+  /* Formula */
+  .formula-box{background:var(--green-bg);border:1px solid var(--green-bdr);border-radius:var(--r-md);padding:16px 20px;margin-bottom:20px}
+  .formula-box h4{font-size:12px;font-weight:700;color:var(--green);margin-bottom:10px;letter-spacing:.3px}
+  .formula-line{font-family:var(--mono);font-size:13px;color:#166534;margin-bottom:6px;padding:6px 10px;background:rgba(255,255,255,.75);border-radius:6px}
+  .formula-note{font-size:11px;color:var(--muted);margin-top:10px;line-height:1.7}
+
+  /* Form */
+  .form-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+  .form-group label{display:block;font-size:11px;font-weight:500;color:var(--muted);margin-bottom:4px}
+  .form-group select,.form-group input[type=number]{width:100%;padding:9px 10px;border:1px solid var(--border);border-radius:var(--r-sm);font-size:13px;font-family:var(--font);color:var(--txt);background:#fff;outline:none;transition:border-color .15s,box-shadow .15s;-moz-appearance:textfield}
+  .form-group input[type=number]::-webkit-outer-spin-button,.form-group input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
+  .form-group select:focus,.form-group input:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(22,163,74,.12)}
+  .input-wrap{position:relative}
+  .input-wrap input{padding-right:42px}
+  .input-unit{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--muted);font-weight:500;pointer-events:none}
+  .calc-btn{padding:10px 24px;background:var(--green);color:#fff;border:none;border-radius:var(--r-sm);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);transition:background .15s;display:flex;align-items:center;gap:8px}
+  .calc-btn:hover{background:#15803d}
+  .calc-btn:disabled{opacity:.6;cursor:not-allowed}
+
+  /* Hero */
+  .result-hero{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:20px}
+  .hero-card{border-radius:var(--r-md);padding:16px;border:1.5px solid var(--border);text-align:center}
+  .hero-label{font-size:10px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+  .hero-value{font-size:24px;font-weight:700;font-family:var(--mono);letter-spacing:-1px;margin-bottom:2px}
+  .hero-sub{font-size:10.5px;color:var(--muted);line-height:1.4}
+
+  /* Charts */
+  .charts-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+  .charts-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px}
+  .chart-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px}
+  .chart-card h4{font-size:13px;font-weight:700;margin-bottom:12px}
+  .chart-wrap{position:relative}
+
+  /* Progress bar */
+  .progress-wrap{background:#f1f5f9;border-radius:6px;height:10px;overflow:hidden;margin-bottom:6px}
+  .progress-fill{height:10px;border-radius:6px;background:var(--green);transition:width .6s cubic-bezier(.4,0,.2,1)}
+
+  /* Stat table */
+  .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .stat-row{display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#f8fafc;border-radius:8px;font-size:12px}
+  .stat-label{color:var(--muted);font-size:11px}
+  .stat-val{font-family:var(--mono);font-weight:600}
+
+  /* CI bar */
+  .ci-bar-wrap{background:#f1f5f9;border-radius:8px;height:28px;position:relative;margin:12px 0}
+  .ci-fill{position:absolute;top:4px;height:20px;background:rgba(22,163,74,.25);border-radius:4px;border:2px solid var(--green)}
+  .ci-center{position:absolute;top:0;width:3px;height:28px;background:var(--green);border-radius:2px}
+  .ci-label{position:absolute;font-size:9px;color:var(--muted);top:50%;transform:translateY(-50%)}
+
+  /* Convergence annotation */
+  .conv-note{font-size:11px;color:var(--muted);text-align:center;margin-top:8px}
+
+  /* Info box */
+  .info-box{background:#f0fdf4;border:1px solid var(--green-bdr);border-radius:var(--r-md);padding:14px 16px;font-size:12px;color:#166534;line-height:1.8}
+  .info-box b{color:#15803d}
+
+  /* Badge */
+  .badge{display:inline-block;padding:2px 8px;border-radius:5px;font-size:10px;font-weight:600;font-family:var(--font)}
+
+  
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .spin{display:inline-block;animation:spin .7s linear infinite}
+  .page-footer{font-size:10px;color:var(--muted2);text-align:center;padding:14px 0 4px;font-style:italic}
+  
+
+  
+</style>
+
+    <!-- Formule -->
+    <div class="formula-box">
+      <h4> ∑ ALGORITHME DE MONTE-CARLO — SOLUTION EXACTE DU MBG</h4>
+      <div class="formula-line">S_T = S₀ · exp[ (r − σ²/2)·T + σ·√T·Z ]&nbsp;&nbsp;&nbsp;&nbsp;où Z ~ N(0,1)</div>
+      <div class="formula-line">Ĉ = e^(−rT) · (1/M) · Σ max(S_T^(i) − K, 0)&nbsp;&nbsp;&nbsp;&nbsp;[estimateur Monte-Carlo]</div>
+      <div class="formula-line">IC 95% = [ Ĉ − 1.96·σ̂/√M , Ĉ + 1.96·σ̂/√M ]&nbsp;&nbsp;&nbsp;&nbsp;Précision ~ 1/√M</div>
+      <div class="formula-note">
+        <b>Principe :</b> On simule M trajectoires indépendantes du prix terminal S_T en utilisant la
+        solution exacte du mouvement brownien géométrique. On estime le prix par la moyenne actualisée
+        des payoffs. La convergence suit la loi des grands nombres : erreur ~ O(1/√M).
+      </div>
+    </div>
+
+    <!-- Paramètres -->
+    <div class="panel" style="margin-bottom:20px">
+      <div class="panel-hdr">
+        <h3>Paramètres de simulation</h3>
+        <button class="calc-btn" id="calcBtn2" onclick="runSimulation()">▷ Lancer la simulation</button>
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Type d'option</label>
+          <select id="optType">
+            <option value="call">Call européen</option>
+            <option value="put">Put européen</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Prix initial S₀</label>
+          <input type="number" id="S0" value="100" min="0.01" step="1">
+        </div>
+        <div class="form-group">
+          <label>Prix d'exercice K</label>
+          <input type="number" id="K" value="100" min="0.01" step="1">
+        </div>
+        <div class="form-group">
+          <label>Taux sans risque r</label>
+          <div class="input-wrap">
+            <input type="number" id="r" value="0.05" min="0" max="1" step="0.005"
+                   oninput="this.nextElementSibling.textContent=Math.round(this.value*100)+'%'">
+            <span class="input-unit">5 %</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Volatilité σ</label>
+          <div class="input-wrap">
+            <input type="number" id="sigma" value="0.20" min="0.01" max="3" step="0.01"
+                   oninput="this.nextElementSibling.textContent=Math.round(this.value*100)+'%'">
+            <span class="input-unit">20 %</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Maturité T (années)</label>
+          <input type="number" id="T" value="1.00" min="0.01" step="0.25">
+        </div>
+        <div class="form-group">
+          <label>Simulations M</label>
+          <div class="input-wrap">
+            <input type="number" id="M" value="20000" min="500" max="200000" step="500"
+                   oninput="document.getElementById('M-disp').textContent=parseInt(this.value).toLocaleString('fr-FR')">
+            <span class="input-unit" id="M-disp" style="font-size:9px">20 000</span>
+          </div>
+        </div>
+        <div class="form-group" style="display:flex;align-items:flex-end">
+            <button class="calc-btn" style="width:100%" id="calcBtn3" onclick="runSimulation()">▷ Simuler</button>
+        </div>
+      </div>
+      <div style="background:#f8fafc;border-radius:8px;padding:10px 14px;font-size:11px;color:var(--muted)">
+          ◦ <b>Tip :</b> Augmentez M pour réduire l'intervalle de confiance. La précision s'améliore en O(1/√M) — doubler M divise l'erreur par √2 ≈ 1.41.
+      </div>
+    </div>
+
+    <!-- Hero results -->
+    <div class="result-hero">
+      <div class="hero-card" style="background:var(--green-bg);border-color:var(--green-bdr)">
+        <div class="hero-label">Prix Monte-Carlo</div>
+        <div class="hero-value" style="color:var(--green)" id="h-mc">—</div>
+        <div class="hero-sub" id="h-mc-sub">—</div>
+      </div>
+      <div class="hero-card" style="background:var(--acc-light);border-color:#bfdbfe">
+        <div class="hero-label">Référence B-S</div>
+        <div class="hero-value" style="color:var(--acc);font-size:20px" id="h-bs">—</div>
+        <div class="hero-sub">Formule analytique</div>
+      </div>
+      <div class="hero-card" style="background:#fff7ed;border-color:#fed7aa">
+        <div class="hero-label">Erreur absolue</div>
+        <div class="hero-value" style="color:var(--orange);font-size:20px" id="h-err">—</div>
+        <div class="hero-sub" id="h-err-rel">Erreur relative : —</div>
+      </div>
+      <div class="hero-card" style="background:#faf5ff;border-color:#ddd6fe">
+        <div class="hero-label">IC 95 %</div>
+        <div class="hero-value" style="color:var(--purple);font-size:16px;padding-top:4px" id="h-ci">—</div>
+        <div class="hero-sub" id="h-ci-w">Largeur : —</div>
+      </div>
+      <div class="hero-card" style="background:#ecfeff;border-color:#a5f3fc">
+        <div class="hero-label">Temps de calcul</div>
+        <div class="hero-value" style="color:var(--cyan);font-size:20px" id="h-time">—</div>
+        <div class="hero-sub" id="h-sps">— sim/sec</div>
+      </div>
+    </div>
+
+    <!-- Intervalles de confiance visuel + stats -->
+    <div class="charts-2" style="margin-bottom:20px">
+      <div class="panel">
+        <div class="panel-hdr"><h3>Intervalle de confiance 95 %</h3></div>
+        <div id="ci-visual" style="padding:8px 0">
+          <div style="font-size:12px;color:var(--muted);text-align:center;padding:20px">
+            Lancez la simulation pour afficher l'intervalle de confiance.
+          </div>
+        </div>
+        <div class="stat-grid" id="stat-grid">
+          <div class="stat-row"><span class="stat-label">Moyenne des payoffs</span><span class="stat-val" id="st-mean">—</span></div>
+          <div class="stat-row"><span class="stat-label">Écart-type des payoffs</span><span class="stat-val" id="st-std">—</span></div>
+          <div class="stat-row"><span class="stat-label">Erreur standard</span><span class="stat-val" id="st-se">—</span></div>
+          <div class="stat-row"><span class="stat-label">Simulations M</span><span class="stat-val" id="st-m">—</span></div>
+          <div class="stat-row"><span class="stat-label">% payoffs > 0</span><span class="stat-val" id="st-itm">—</span></div>
+          <div class="stat-row"><span class="stat-label">Facteur d'actualisation</span><span class="stat-val" id="st-df">—</span></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-hdr"><h3>Comparaison des méthodes</h3></div>
+        <div style="margin-bottom:14px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <span style="font-size:12px;font-weight:600;color:var(--acc)">Black-Scholes (référence)</span>
+            <span style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--acc)" id="cmp-bs">—</span>
+          </div>
+          <div class="progress-wrap"><div class="progress-fill" id="prg-bs" style="background:var(--acc)"></div></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <span style="font-size:12px;font-weight:600;color:var(--green)">Monte-Carlo (estimé)</span>
+            <span style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--green)" id="cmp-mc">—</span>
+          </div>
+          <div class="progress-wrap"><div class="progress-fill" id="prg-mc"></div></div>
+          <div style="margin-top:12px;padding:10px;background:#f8fafc;border-radius:8px;font-size:11px;color:var(--muted);line-height:1.7" id="cmp-interp">
+            Lancez la simulation pour afficher la comparaison.
+          </div>
+        </div>
+        <div class="info-box" id="info-box">
+          <b>Principe :</b> Monte-Carlo simule M prix terminaux S_T indépendants
+          et en fait la moyenne actualisée. Plus M est grand, plus l'estimateur
+          converge vers le prix Black-Scholes exact.
+        </div>
+      </div>
+    </div>
+
+    <!-- 3 charts -->
+    <div class="charts-3">
+      <div class="chart-card">
+        <h4>Distribution de S_T (prix terminaux)</h4>
+        <div class="chart-wrap" style="height:195px">
+          <canvas id="chartST" role="img" aria-label="Histogramme de la distribution des prix terminaux simulés">—</canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <h4>Distribution des payoffs max(S_T−K, 0)</h4>
+        <div class="chart-wrap" style="height:195px">
+          <canvas id="chartPayoffs" role="img" aria-label="Histogramme de la distribution des payoffs simulés">—</canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <h4>Courbe de convergence (prix vs M)</h4>
+        <div class="chart-wrap" style="height:195px">
+          <canvas id="chartConv" role="img" aria-label="Courbe de convergence du prix Monte-Carlo en fonction du nombre de simulations">—</canvas>
+        </div>
+        <div class="conv-note" id="conv-note">—</div>
+      </div>
+    </div>
+
+    <!-- Charts row 2 -->
+    <div class="charts-2">
+      <div class="chart-card">
+        <h4>Évolution de l'IC 95 % en fonction de M</h4>
+        <div class="chart-wrap" style="height:195px">
+          <canvas id="chartCI" role="img" aria-label="Évolution de la largeur de l'IC 95% en fonction du nombre de simulations">—</canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <h4>Erreur relative (%) vs M — convergence 1/√M</h4>
+        <div class="chart-wrap" style="height:195px">
+          <canvas id="chartErrConv" role="img" aria-label="Erreur relative en fonction du nombre de simulations, comparée à la courbe 1/sqrt(M)">—</canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-footer">
+      Méthode de Monte-Carlo — Convergence O(1/√M) · Intervalle de confiance 95 % basé sur le TCL · Les résultats varient à chaque simulation (aléatoire)
+    </div>
+
+{% endblock %}
+
+{% block scripts %}
+
+<script>
+/* ── Normal CDF (Abramowitz & Stegun) ── */
+function normCDF(x){ return OPL.normCDF(x); }
+function normPDF(x){return Math.exp(-0.5*x*x)/Math.sqrt(2*Math.PI);}
+
+/* ── Black-Scholes ── */
+function bsPrice(S,K,r,sig,T,type){
+  const d1=(Math.log(S/K)+(r+0.5*sig*sig)*T)/(sig*Math.sqrt(T));
+  const d2=d1-sig*Math.sqrt(T);
+  if(type==='call') return S*normCDF(d1)-K*Math.exp(-r*T)*normCDF(d2);
+  return K*Math.exp(-r*T)*normCDF(-d2)-S*normCDF(-d1);
+}
+
+/* ── Box-Muller ── */
+function randn(){
+  const u1=Math.random(),u2=Math.random();
+  return Math.sqrt(-2*Math.log(u1))*Math.cos(2*Math.PI*u2);
+}
+
+/* ── Monte-Carlo core ── */
+function monteCarlo(S,K,r,sig,T,M,type){
+  const sqrtT=Math.sqrt(T), df=Math.exp(-r*T);
+  const drift=(r-0.5*sig*sig)*T;
+  let sum=0,sum2=0,itmCount=0;
+  const ST_sample=[],pf_sample=[];
+  for(let i=0;i<M;i++){
+    const Z=randn();
+    const ST=S*Math.exp(drift+sig*sqrtT*Z);
+    const pf=type==='call'?Math.max(ST-K,0):Math.max(K-ST,0);
+    sum+=pf; sum2+=pf*pf;
+    if(pf>0) itmCount++;
+    if(i<2000){ ST_sample.push(ST); pf_sample.push(pf); }
+  }
+  const mean=sum/M, var_=sum2/M-mean*mean;
+  const std=Math.sqrt(var_);
+  const se=std/Math.sqrt(M);
+  const price=mean*df;
+  const ci95=[price-1.96*se*df, price+1.96*se*df];
+  return{price,mean,std,se,ci95,df,itmCount,M,ST_sample,pf_sample};
+}
+
+/* ── State ── */
+let charts={}, lastRes=null, lastP=null;
+function P(){
+  return{
+    type:document.getElementById('optType').value,
+    S:parseFloat(document.getElementById('S0').value)||100,
+    K:parseFloat(document.getElementById('K').value)||100,
+    r:parseFloat(document.getElementById('r').value)||0.05,
+    sig:parseFloat(document.getElementById('sigma').value)||0.20,
+    T:parseFloat(document.getElementById('T').value)||1,
+    M:parseInt(document.getElementById('M').value)||20000
+  };
+}
+function fmt(v,d){d=d!=null?d:4;return v==null?'—':v.toFixed(d);}
+
+/* ── Run ── */
+function runSimulation(){
+  const btn=document.getElementById('runBtn');
+  const btn2=document.getElementById('calcBtn2');
+  const btn3=document.getElementById('calcBtn3');
+  [btn,btn2,btn3].forEach(b=>{b.disabled=true;});
+  btn.innerHTML='<span class="spin">⟳</span> Simulation…';
+
+  setTimeout(()=>{
+    const p=P();
+    const t0=performance.now();
+    const res=monteCarlo(p.S,p.K,p.r,p.sig,p.T,p.M,p.type);
+    const elapsed=(performance.now()-t0)/1000;
+    const bs=bsPrice(p.S,p.K,p.r,p.sig,p.T,p.type);
+    const absErr=Math.abs(res.price-bs);
+    const relErr=bs>0?absErr/bs*100:0;
+
+    lastRes={...res,bs,absErr,relErr,elapsed};
+    lastP=p;
+
+    updateHero(res,bs,absErr,relErr,elapsed,p);
+    updateStats(res,p);
+    updateCI(res,bs);
+    buildCharts(res,p,bs);
+    buildConvergence(p,bs);
+
+    [btn,btn2,btn3].forEach(b=>b.disabled=false);
+    btn.innerHTML='▷ Simuler';
+    toast('✓ Simulation terminée — M='+p.M.toLocaleString('fr-FR')+' — Prix='+fmt(res.price,4));
+  },20);
+}
+
+/* ── Hero ── */
+function updateHero(res,bs,absErr,relErr,elapsed,p){
+  document.getElementById('h-mc').textContent=fmt(res.price,4);
+  document.getElementById('h-mc-sub').textContent='M = '+p.M.toLocaleString('fr-FR')+' simulations';
+  document.getElementById('h-bs').textContent=fmt(bs,4);
+  document.getElementById('h-err').textContent=fmt(absErr,4);
+  document.getElementById('h-err-rel').textContent='Erreur relative : '+fmt(relErr,2)+'%';
+  document.getElementById('h-ci').textContent='['+fmt(res.ci95[0],4)+' ; '+fmt(res.ci95[1],4)+']';
+  const width=res.ci95[1]-res.ci95[0];
+  document.getElementById('h-ci-w').textContent='Largeur : '+fmt(width,4);
+  document.getElementById('h-time').textContent=elapsed.toFixed(3)+'s';
+  document.getElementById('h-sps').textContent=(p.M/elapsed).toFixed(0)+' sim/sec';
+}
+
+/* ── Stats ── */
+function updateStats(res,p){
+  document.getElementById('st-mean').textContent=fmt(res.mean,4);
+  document.getElementById('st-std').textContent=fmt(res.std,4);
+  document.getElementById('st-se').textContent=fmt(res.se,6);
+  document.getElementById('st-m').textContent=p.M.toLocaleString('fr-FR');
+  document.getElementById('st-itm').textContent=fmt(res.itmCount/p.M*100,1)+'%';
+  document.getElementById('st-df').textContent=fmt(res.df,6);
+}
+
+/* ── CI visual ── */
+function updateCI(res,bs){
+  const lo=res.ci95[0],hi=res.ci95[1],price=res.price;
+  const range=Math.max(hi-lo,0.001)*3;
+  const base=price-range/2;
+  const loP=((lo-base)/range*100).toFixed(1);
+  const hiP=((hi-base)/range*100).toFixed(1);
+  const prP=((price-base)/range*100).toFixed(1);
+  const bsP=((bs-base)/range*100).toFixed(1);
+  document.getElementById('ci-visual').innerHTML=`
+    <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:6px">Axe des prix (zone centrée)</div>
+    <div class="ci-bar-wrap">
+      <div class="ci-fill" style="left:${Math.max(0,loP)}%;width:${Math.min(100,hiP-loP)}%"></div>
+      <div class="ci-center" style="left:${prP}%"></div>
+      <div style="position:absolute;left:${Math.max(2,bsP-1)}%;top:-16px;font-size:9px;color:var(--acc);font-weight:600">BS</div>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:2px">
+      <span>IC bas : <b style="color:var(--green)">${fmt(lo,4)}</b></span>
+      <span>MC : <b style="color:var(--green)">${fmt(price,4)}</b></span>
+      <span>IC haut : <b style="color:var(--green)">${fmt(hi,4)}</b></span>
+    </div>
+    <div style="margin-top:6px;font-size:10.5px;color:${bs>=lo&&bs<=hi?'var(--green)':'var(--orange)'}">
+      ${bs>=lo&&bs<=hi?'✓ Le prix Black-Scholes est contenu dans l\'IC 95 %':'! Le prix Black-Scholes est en dehors de l\'IC 95 %'}
+    </div>`;
+
+  const cmpBS=Math.max(bs,res.price);
+  document.getElementById('cmp-bs').textContent=fmt(bs,4);
+  document.getElementById('cmp-mc').textContent=fmt(res.price,4);
+  document.getElementById('prg-bs').style.width='100%';
+  document.getElementById('prg-mc').style.width=(res.price/cmpBS*100).toFixed(1)+'%';
+  document.getElementById('cmp-interp').innerHTML=
+    `<b>BS = ${fmt(bs,4)}</b> (référence exacte)<br>
+     <b>MC = ${fmt(res.price,4)}</b> — erreur absolue = <b>${fmt(Math.abs(res.price-bs),4)}</b><br>
+     Erreur relative : <b>${fmt(Math.abs(res.price-bs)/bs*100,3)}%</b> — ${res.price>bs?'surestimation':'sous-estimation'}<br>
+     L'IC 95% couvre ${fmt((res.ci95[1]-res.ci95[0]),4)} unités de large.`;
+}
+
+/* ── Histogram helper ── */
+function makeHist(data,bins){
+  const mn=Math.min(...data), mx=Math.max(...data);
+  const w=(mx-mn)/bins;
+  const counts=Array(bins).fill(0);
+  const labels=[];
+  for(let i=0;i<bins;i++) labels.push((mn+i*w+w/2).toFixed(1));
+  data.forEach(v=>{
+    const idx=Math.min(Math.floor((v-mn)/w),bins-1);
+    counts[idx]++;
+  });
+  return{labels,counts};
+}
+
+/* ── Charts ── */
+const GRID='#f1f5f9';
+function mkChart(id,type,data,opts){
+  const el=document.getElementById(id);
+  if(charts[id]) charts[id].destroy();
+  charts[id]=new Chart(el,{type,data,options:{responsive:true,maintainAspectRatio:false,animation:{duration:500},...opts}});
+}
+
+function buildCharts(res,p,bs){
+  const BINS=35;
+
+  /* Hist ST */
+  const hST=makeHist(res.ST_sample,BINS);
+  mkChart('chartST','bar',
+    {labels:hST.labels,
+     datasets:[{data:hST.counts,backgroundColor:'rgba(22,163,74,.55)',borderColor:'rgba(22,163,74,.85)',borderWidth:1,borderRadius:3}]},
+    {plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' Fréquence : '+c.raw}}},
+     scales:{x:{ticks:{maxTicksLimit:7,font:{size:9}},grid:{color:GRID},title:{display:true,text:'S_T',font:{size:10}}},
+             y:{ticks:{font:{size:9}},grid:{color:GRID},title:{display:true,text:'Fréquence',font:{size:10}}}}});
+
+  /* Hist payoffs — filter positif */
+  const posPf=res.pf_sample.filter(v=>v>0);
+  if(posPf.length>10){
+    const hPF=makeHist(posPf,BINS);
+    mkChart('chartPayoffs','bar',
+      {labels:hPF.labels,
+       datasets:[{data:hPF.counts,backgroundColor:'rgba(124,58,237,.5)',borderColor:'rgba(124,58,237,.8)',borderWidth:1,borderRadius:3}]},
+      {plugins:{legend:{display:false}},
+       scales:{x:{ticks:{maxTicksLimit:7,font:{size:9}},grid:{color:GRID},title:{display:true,text:'Payoff',font:{size:10}}},
+               y:{ticks:{font:{size:9}},grid:{color:GRID}}}});
+  } else {
+    mkChart('chartPayoffs','bar',
+      {labels:['0 (OTM)'],datasets:[{data:[res.pf_sample.length],backgroundColor:'rgba(124,58,237,.4)',borderRadius:3}]},
+      {plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:10}}},y:{ticks:{font:{size:9}}}}});
+  }
+
+  document.getElementById('conv-note').textContent='Erreur ~ 1/√M — prix BS = '+fmt(bs,4);
+}
+
+/* ── Convergence ── */
+function buildConvergence(p,bs){
+  const steps=[100,250,500,1000,2000,5000,10000,p.M];
+  const uniqueSteps=[...new Set(steps.filter(s=>s<=p.M))].sort((a,b)=>a-b);
+  const prices=[],lo=[],hi=[];
+  uniqueSteps.forEach(m=>{
+    const r=monteCarlo(p.S,p.K,p.r,p.sig,p.T,Math.min(m,2000),p.type);
+    prices.push(r.price);
+    lo.push(r.ci95[0]);
+    hi.push(r.ci95[1]);
+  });
+  const labels=uniqueSteps.map(m=>m>=1000?(m/1000).toFixed(0)+'k':m.toString());
+
+  mkChart('chartConv','line',
+    {labels,datasets:[
+      {label:'Prix MC',data:prices,borderColor:'#16a34a',borderWidth:2,pointRadius:3,tension:.3,fill:false},
+      {label:'BS exact',data:uniqueSteps.map(()=>bs),borderColor:'#2563eb',borderWidth:1.5,borderDash:[5,4],pointRadius:0,fill:false},
+      {label:'IC bas',data:lo,borderColor:'rgba(22,163,74,.35)',borderWidth:1,pointRadius:0,fill:false,borderDash:[3,3]},
+      {label:'IC haut',data:hi,borderColor:'rgba(22,163,74,.35)',borderWidth:1,pointRadius:0,fill:'+2',backgroundColor:'rgba(22,163,74,.07)',borderDash:[3,3]}
+    ]},
+    {plugins:{legend:{display:true,labels:{font:{size:9},boxWidth:10}}},
+     scales:{x:{ticks:{font:{size:9}},grid:{color:GRID},title:{display:true,text:'M simulations',font:{size:10}}},
+             y:{ticks:{font:{size:9}},grid:{color:GRID}}}});
+
+  /* IC width */
+  const widths=lo.map((l,i)=>hi[i]-l);
+  mkChart('chartCI','line',
+    {labels,datasets:[
+      {label:'Largeur IC 95%',data:widths,borderColor:'#7c3aed',borderWidth:2,pointRadius:3,tension:.3,fill:true,backgroundColor:'rgba(124,58,237,.07)'}
+    ]},
+    {plugins:{legend:{display:false}},
+     scales:{x:{ticks:{font:{size:9}},grid:{color:GRID},title:{display:true,text:'M',font:{size:10}}},
+             y:{ticks:{font:{size:9},callback:v=>v.toFixed(3)},grid:{color:GRID},title:{display:true,text:'Largeur IC',font:{size:10}}}}});
+
+  /* Err vs M */
+  const errs=prices.map(pr=>Math.abs(pr-bs)/bs*100);
+  const inv=uniqueSteps.map((m,i)=>errs[0]*Math.sqrt(uniqueSteps[0])/Math.sqrt(m));
+  mkChart('chartErrConv','line',
+    {labels,datasets:[
+      {label:'Erreur rel. MC (%)',data:errs,borderColor:'#f97316',borderWidth:2,pointRadius:3,tension:.2,fill:false},
+      {label:'Courbe 1/√M',data:inv,borderColor:'rgba(37,99,235,.6)',borderWidth:1.5,borderDash:[5,4],pointRadius:0,fill:false}
+    ]},
+    {plugins:{legend:{display:true,labels:{font:{size:9},boxWidth:10}}},
+     scales:{x:{ticks:{font:{size:9}},grid:{color:GRID},title:{display:true,text:'M',font:{size:10}}},
+             y:{ticks:{font:{size:9},callback:v=>v.toFixed(2)+'%'},grid:{color:GRID}}}});
+}
+
+/* ── Export CSV ── */
+function exportCSV(){
+  if(!lastRes){toast('! Lancez d\'abord la simulation !');return;}
+  const r=lastRes,p=lastP;
+  const rows=[
+    ['Monte-Carlo — Résultats'],
+    ['Paramètre','Valeur'],
+    ['Type',p.type],['S0',p.S],['K',p.K],['r',p.r],['sigma',p.sig],['T',p.T],['M',p.M],
+    [],['Résultat','Valeur'],
+    ['Prix MC',r.price.toFixed(6)],['Prix BS (ref)',r.bs.toFixed(6)],
+    ['Erreur absolue',r.absErr.toFixed(6)],['Erreur relative (%)',r.relErr.toFixed(4)],
+    ['IC 95% bas',r.ci95[0].toFixed(6)],['IC 95% haut',r.ci95[1].toFixed(6)],
+    ['Largeur IC',(r.ci95[1]-r.ci95[0]).toFixed(6)],
+    ['Moyenne payoffs',r.mean.toFixed(6)],['Écart-type payoffs',r.std.toFixed(6)],
+    ['Erreur standard',r.se.toFixed(8)],['Facteur actualisation',r.df.toFixed(6)],
+    ['% ITM',(r.itmCount/p.M*100).toFixed(2)+'%'],
+    ['Temps (s)',r.elapsed.toFixed(4)]
+  ].map(r=>r.join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([rows],{type:'text/csv'}));
+  a.download='monte_carlo_results.csv'; a.click();
+  toast('✓ CSV téléchargé.');
+}
+
+
+
+/* ── Init ── */
+runSimulation();
+</script>
+{% endblock %}

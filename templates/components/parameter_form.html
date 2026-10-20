@@ -1,0 +1,18 @@
+<div class="panel parameters-card">
+  <div class="panel-hdr">
+    <h3>Paramètres de l'option</h3>
+    <button class="icon-btn" onclick="resetParams()">↺</button>
+  </div>
+  <div class="form-group">
+    <label>Type d'option</label>
+    <select id="option_type"><option value="call">Call</option><option value="put">Put</option></select>
+  </div>
+  <div class="form-group"><label>Prix initial S<sub>0</sub></label><input id="S" type="number" value="100" step="1"></div>
+  <div class="form-group"><label>Prix d'exercice K</label><input id="K" type="number" value="100" step="1"></div>
+  <div class="form-group"><label>Taux sans risque r</label><input id="r" type="number" value="0.05" step="0.01"></div>
+  <div class="form-group"><label>Volatilité σ</label><input id="sigma" type="number" value="0.20" step="0.01"></div>
+  <div class="form-group"><label>Maturité T (années)</label><input id="T" type="number" value="1" step="0.25"></div>
+  <div class="form-group"><label>Nombre de simulations M</label><input id="M" type="number" value="10000" step="1000"></div>
+  <div class="form-group"><label>Nombre de pas N (Euler)</label><input id="N" type="number" value="252" step="1"></div>
+  <button class="btn-primary full" onclick="computeAll()">Mettre à jour</button>
+</div>

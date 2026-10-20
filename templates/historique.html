@@ -1,0 +1,689 @@
+
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="page-actions" style="display:flex;justify-content:flex-end;gap:10px;margin-bottom:16px">
+  <button class="tb-btn" onclick="exportAllCSV()">⇩ Exporter tout</button>
+  <button class="tb-btn" onclick="addDemoScenarios()">＋ Ajouter démos</button>
+  <button class="tb-btn danger" onclick="confirmClearAll()">× Tout effacer</button>
+</div>
+
+  <style>
+      
+      :root {
+        --amber: #d97706;
+        --amber-bg: #fffbeb;
+        --amber-bdr: #fde68a;
+        --slate: #475569;
+      }
+
+      .page-actions .tb-btn:hover {
+        border-color: var(--slate);
+        color: var(--slate);
+      }
+      
+      .tb-btn.danger {
+        background: var(--red);
+        color: #fff;
+        border-color: var(--red);
+      }
+
+      .tb-btn.danger:hover {
+        background: #b91c1c;
+        color: #fff;
+        border-color: #b91c1c;
+      }
+
+      .page-actions .tb-btn.primary {
+        background: var(--slate);
+        color: #fff;
+        border-color: var(--slate);
+      }
+
+      .page-actions .tb-btn.danger {
+        background: var(--red);
+        color: #fff;
+        border-color: var(--red);
+      }
+
+      .page-actions .tb-btn.danger:hover {
+        background: #b91c1c;
+      }
+      
+    /* Breadcrumb */
+    .breadcrumb{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);margin-bottom:18px}
+    .breadcrumb a{color:var(--acc);text-decoration:none}
+    .breadcrumb a:hover{text-decoration:underline}
+
+    /* Panel */
+    .panel{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:20px}
+    .panel-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+    .panel-hdr h3{font-size:15px;font-weight:700}
+
+    /* Stats row */
+    .stats-row{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:20px}
+    .stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px;text-align:center}
+    .stat-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:6px}
+    .stat-value{font-size:26px;font-weight:700;font-family:var(--mono);letter-spacing:-1px}
+    .stat-sub{font-size:11px;color:var(--muted);margin-top:3px}
+
+    /* Filters bar */
+    .filters-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px;padding:14px 16px;background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg)}
+    .filter-group{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+    .filter-group select,.filter-group input{padding:6px 10px;border:1px solid var(--border);border-radius:var(--r-sm);font-size:12px;font-family:var(--font);color:var(--txt);background:#fff;outline:none}
+    .filter-group select:focus,.filter-group input:focus{border-color:var(--acc)}
+    .filter-sep{width:1px;height:24px;background:var(--border)}
+    .search-wrap{flex:1;position:relative}
+    .search-wrap input{width:100%;padding:7px 10px 7px 32px;border:1px solid var(--border);border-radius:var(--r-sm);font-size:12px;font-family:var(--font);outline:none}
+    .search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:14px;color:var(--muted);pointer-events:none}
+
+    /* History table */
+    .hist-table{width:100%;border-collapse:collapse;font-size:12px}
+    .hist-table th{padding:10px 14px;background:#f8fafc;border-bottom:2px solid var(--border);font-weight:600;font-size:11px;color:var(--muted);text-align:left;letter-spacing:.3px;cursor:pointer;user-select:none;white-space:nowrap}
+    .hist-table th:hover{color:var(--acc)}
+    .hist-table th.sort-asc::after{content:' ▲';color:var(--acc)}
+    .hist-table th.sort-desc::after{content:' ▼';color:var(--acc)}
+    .hist-table td{padding:10px 14px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
+    .hist-table tr:last-child td{border-bottom:none}
+    .hist-table tr:hover td{background:#fafbfc}
+    .hist-table tr.selected td{background:#eff6ff}
+    .badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;font-family:var(--font)}
+    .mono{font-family:var(--mono);font-weight:600}
+    .action-btn{padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:#fff;cursor:pointer;font-size:11px;font-family:var(--font);color:var(--muted);transition:all .15s}
+    .action-btn:hover{border-color:var(--acc);color:var(--acc);background:var(--acc-light)}
+    .action-btn.del:hover{border-color:var(--red);color:var(--red);background:#fef2f2}
+
+    /* Charts */
+    .charts-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+    .charts-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px}
+    .chart-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px}
+    .chart-card h4{font-size:13px;font-weight:700;margin-bottom:12px}
+    .chart-wrap{position:relative}
+
+    /* Detail panel */
+    .detail-panel{background:var(--card);border:1.5px solid var(--acc);border-radius:var(--r-lg);padding:20px;margin-bottom:20px;display:none}
+    .detail-panel.visible{display:block}
+    .detail-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}
+    .detail-item{background:#f8fafc;border-radius:var(--r-md);padding:10px}
+    .detail-item-label{font-size:10px;color:var(--muted);font-weight:500;margin-bottom:3px}
+    .detail-item-val{font-size:15px;font-weight:700;font-family:var(--mono)}
+
+    /* Empty state */
+    .empty-state{text-align:center;padding:48px 20px;color:var(--muted)}
+    .empty-icon{font-size:48px;margin-bottom:14px}
+    .empty-title{font-size:16px;font-weight:700;color:var(--txt);margin-bottom:6px}
+    .empty-sub{font-size:13px;line-height:1.6}
+
+    /* Pagination */
+    .pagination{display:flex;align-items:center;gap:6px;justify-content:center;margin-top:14px}
+    .page-btn{width:32px;height:32px;border-radius:var(--r-sm);border:1px solid var(--border);background:#fff;cursor:pointer;font-size:12px;font-family:var(--font);display:flex;align-items:center;justify-content:center;transition:all .15s}
+    .page-btn:hover{border-color:var(--acc);color:var(--acc)}
+    .page-btn.active{background:var(--acc);color:#fff;border-color:var(--acc)}
+    .page-btn:disabled{opacity:.4;cursor:not-allowed}
+
+    /* Modal confirm */
+    .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1000;display:none;align-items:center;justify-content:center}
+    .modal-bg.open{display:flex}
+    .modal{background:#fff;border-radius:16px;padding:24px;max-width:380px;width:90%;box-shadow:0 16px 48px rgba(0,0,0,.2)}
+    .modal h3{font-size:16px;font-weight:700;margin-bottom:10px}
+    .modal p{font-size:13px;color:var(--muted);margin-bottom:18px}
+    .modal-btns{display:flex;gap:8px;justify-content:flex-end}
+    .page-footer{font-size:10px;color:var(--muted2);text-align:center;padding:14px 0 4px;font-style:italic}
+  </style>
+
+
+
+
+
+    <div class="breadcrumb">
+      <a href="{{ url_for('dashboard') }}">⌂ Tableau de bord</a>
+      <span>›</span>
+      <span style="color:var(--slate);font-weight:500">▤ Historique</span>
+    </div>
+
+    <!-- Stats row -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-label">Total scénarios</div>
+        <div class="stat-value" id="st-total" style="color:var(--acc)">0</div>
+        <div class="stat-sub">enregistrés</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-label">Calls</div>
+        <div class="stat-value" id="st-calls" style="color:var(--green)">0</div>
+        <div class="stat-sub">options d'achat</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-label">Puts</div>
+        <div class="stat-value" id="st-puts" style="color:var(--orange)">0</div>
+        <div class="stat-sub">options de vente</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-label">Prix moyen BS</div>
+        <div class="stat-value" id="st-avgbs" style="color:var(--purple);font-size:20px">—</div>
+        <div class="stat-sub">Black-Scholes</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-label">Meilleure méthode</div>
+        <div class="stat-value" id="st-bestmethod" style="color:var(--cyan);font-size:16px;padding-top:4px">—</div>
+        <div class="stat-sub">la plus fréquente</div>
+      </div>
+    </div>
+    <!-- FIN stats-row -->
+
+    <!-- Charts row -->
+    <div class="charts-3" id="chartsSection" style="display:none">
+      <div class="chart-card">
+        <h4>Évolution du prix BS dans le temps</h4>
+        <div class="chart-wrap" style="height:180px">
+          <canvas id="chartTimeline" role="img" aria-label="Évolution chronologique du prix Black-Scholes des scénarios">—</canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <h4>Distribution des prix BS</h4>
+        <div class="chart-wrap" style="height:180px">
+          <canvas id="chartDist" role="img" aria-label="Histogramme de distribution des prix Black-Scholes">—</canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <h4>Comparaison erreurs relatives (%)</h4>
+        <div class="chart-wrap" style="height:180px">
+          <canvas id="chartErrComp" role="img" aria-label="Comparaison des erreurs relatives par scénario">—</canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Detail panel -->
+    <div class="detail-panel" id="detailPanel">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+        <h3 style="font-size:15px;font-weight:700">▤ Détail du scénario sélectionné</h3>
+        <button class="action-btn" onclick="closeDetail()">✕ Fermer</button>
+      </div>
+      <div id="detailContent"></div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-bar">
+      <div class="search-wrap">
+        <span class="search-icon">⌕</span>
+        <input type="text" id="searchInput" placeholder="Rechercher par paramètres, méthode…" oninput="renderTable()">
+      </div>
+      <div class="filter-sep"></div>
+      <div class="filter-group">
+        <label>Type :</label>
+        <select id="filterType" onchange="renderTable()">
+          <option value="all">Tous</option>
+          <option value="call">Call</option>
+          <option value="put">Put</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Meilleure méthode :</label>
+        <select id="filterBest" onchange="renderTable()">
+          <option value="all">Toutes</option>
+          <option value="Monte-Carlo">Monte-Carlo</option>
+          <option value="Euler-Maruyama">Euler-Maruyama</option>
+          <option value="Machine Learning">Machine Learning</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Trier par :</label>
+        <select id="sortField" onchange="renderTable()">
+          <option value="date">Date</option>
+          <option value="bs">Prix BS</option>
+          <option value="S0">S₀</option>
+          <option value="sig">σ</option>
+          <option value="err">Erreur</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <select id="sortDir" onchange="renderTable()">
+          <option value="desc">↓ Desc</option>
+          <option value="asc">↑ Asc</option>
+        </select>
+      </div>
+      <button class="tb-btn" onclick="resetFilters()">↺ Réinitialiser</button>
+    </div>
+
+    <!-- Table -->
+    <div class="panel" style="padding:0;overflow:hidden;margin-bottom:20px">
+      <div style="overflow-x:auto">
+        <table class="hist-table">
+          <thead>
+            <tr>
+              <th style="width:32px">#</th>
+              <th>Date & Heure</th>
+              <th>Type</th>
+              <th>S₀</th><th>K</th><th>r</th><th>σ</th><th>T</th>
+              <th>Prix BS</th>
+              <th>Monte-Carlo</th>
+              <th>Euler</th>
+              <th>ML</th>
+              <th>Meilleure méthode</th>
+              <th>Err. rel.</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="histBody"></tbody>
+        </table>
+      </div>
+      <div class="pagination" id="pagination"></div>
+    </div>
+
+    <div class="page-footer">
+      Scénarios stockés localement (localStorage) · Les données persistent entre les sessions · Maximum recommandé : 500 scénarios
+    </div>
+
+<!-- Modal confirmation -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h3 id="modalTitle">Confirmer la suppression</h3>
+    <p id="modalMsg">Voulez-vous supprimer tous les scénarios ? Cette action est irréversible.</p>
+    <div class="modal-btns">
+      <button class="tb-btn" onclick="closeModal()">Annuler</button>
+      <button class="tb-btn danger" id="modalConfirmBtn">Supprimer</button>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+
+<script>
+/* ── Storage key ── */
+const KEY='opl_scenarios';
+
+/* ── Math helpers ── */
+function normCDF(x){ return OPL.normCDF(x); }
+function bsPrice(S,K,r,sig,T,type){
+  if(sig*Math.sqrt(T)<1e-8) return type==='call'?Math.max(S-K*Math.exp(-r*T),0):Math.max(K*Math.exp(-r*T)-S,0);
+  const d1=(Math.log(S/K)+(r+0.5*sig*sig)*T)/(sig*Math.sqrt(T));
+  const d2=d1-sig*Math.sqrt(T);
+  if(type==='call') return S*normCDF(d1)-K*Math.exp(-r*T)*normCDF(d2);
+  return K*Math.exp(-r*T)*normCDF(-d2)-S*normCDF(-d1);
+}
+function randn(){return Math.sqrt(-2*Math.log(Math.random()))*Math.cos(2*Math.PI*Math.random());}
+function mcPrice(S,K,r,sig,T,type){
+  const df=Math.exp(-r*T),drift=(r-0.5*sig*sig)*T,sqrtT=Math.sqrt(T);
+  let s=0;for(let i=0;i<3000;i++){const ST=S*Math.exp(drift+sig*sqrtT*randn());s+=(type==='call'?Math.max(ST-K,0):Math.max(K-ST,0));}
+  return(s/3000)*df;
+}
+function emPrice(S,K,r,sig,T,type){
+  const N=100,dt=T/N,sqrtDt=Math.sqrt(dt),df=Math.exp(-r*T);
+  let s=0;for(let i=0;i<2000;i++){let St=S;for(let j=0;j<N;j++)St=Math.max(0,St+r*St*dt+sig*St*sqrtDt*randn());s+=(type==='call'?Math.max(St-K,0):Math.max(K-St,0));}
+  return(s/2000)*df;
+}
+/* Prédiction du vrai modèle scikit-learn entraîné côté serveur (voir static/js/pricing_core.js). */
+
+/* ── Load / Save ── */
+function loadScenarios(){
+  try{return JSON.parse(localStorage.getItem(KEY)||'[]');}catch{return [];}
+}
+function saveScenarios(data){
+  try{localStorage.setItem(KEY,JSON.stringify(data));}catch{toast('! Impossible d\'accéder au localStorage.');}
+}
+
+/* ── State ── */
+let scenarios=loadScenarios();
+let selectedId=null;
+let currentPage=1;
+const PAGE_SIZE=12;
+let charts={};
+
+/* ── Demo scenarios generator ── */
+async function addDemoScenarios(){
+  const types=['call','put'];
+  const draws=Array.from({length:20},(_,i)=>{
+    const S=50+Math.random()*150;
+    return {type:types[i%2],S,K:S*(0.8+Math.random()*0.4),r:0.01+Math.random()*0.09,sig:0.10+Math.random()*0.50,T:0.25+Math.random()*2.75};
+  });
+  let mlPrices;
+  try{
+    mlPrices=(await OPL.mlPredictMany(draws.map(d=>({S:d.S,K:d.K,r:d.r,sigma:d.sig,T:d.T,option_type:d.type})))).prices;
+  }catch(e){ toast('⚠ Modèle ML indisponible : '+e.message); return; }
+  const demos=draws.map((dr,i)=>{
+    const {type,S,K,r,sig,T}=dr;
+    const bs=bsPrice(S,K,r,sig,T,type);
+    const mc=mcPrice(S,K,r,sig,T,type);
+    const em=emPrice(S,K,r,sig,T,type);
+    const ml=mlPrices[i];
+    const safe=bs>1e-6?bs:1e-6;
+    const errMC=Math.abs(mc-bs)/safe*100;
+    const errEM=Math.abs(em-bs)/safe*100;
+    const errML=Math.abs(ml-bs)/safe*100;
+    const best=[{n:'Monte-Carlo',e:errMC},{n:'Euler-Maruyama',e:errEM},{n:'Machine Learning',e:errML}].sort((a,b)=>a.e-b.e)[0];
+    const d=new Date(Date.now()-Math.random()*30*24*3600*1000);
+    return{
+      id:Date.now()+i,
+      date:d.toISOString(),
+      params:{type,S:+S.toFixed(2),K:+K.toFixed(2),r:+r.toFixed(4),sig:+sig.toFixed(4),T:+T.toFixed(4)},
+      results:{bs:+bs.toFixed(6),mc:+mc.toFixed(6),em:+em.toFixed(6),ml:+ml.toFixed(6),
+               best:best.n,bestErr:+best.e.toFixed(4)}
+    };
+  });
+  scenarios=[...scenarios,...demos];
+  saveScenarios(scenarios);
+  renderAll();
+  toast('✓ 20 scénarios de démonstration ajoutés.');
+}
+
+/* ── Stats header ── */
+function updateStats(){
+  const total=scenarios.length;
+  const calls=scenarios.filter(s=>s.params.type==='call').length;
+  const puts=total-calls;
+  const avgBS=total?scenarios.reduce((a,s)=>a+(s.results.bs||0),0)/total:0;
+  const bestFreq={};
+  scenarios.forEach(s=>{const b=s.results.best;if(b) bestFreq[b]=(bestFreq[b]||0)+1;});
+  const topMethod=Object.entries(bestFreq).sort((a,b)=>b[1]-a[1])[0];
+
+  document.getElementById('st-total').textContent=total;
+  document.getElementById('st-calls').textContent=calls;
+  document.getElementById('st-puts').textContent=puts;
+  document.getElementById('st-avgbs').textContent=total?avgBS.toFixed(4):'—';
+  document.getElementById('st-bestmethod').textContent=topMethod
+    ?topMethod[0].replace('Monte-Carlo','MC').replace('Euler-Maruyama','Euler').replace('Machine Learning','ML'):'—';
+}
+
+/* ── Charts ── */
+const GRID='#f1f5f9';
+function mkChart(id,type,data,opts){
+  const el=document.getElementById(id);if(!el)return;
+  if(charts[id]) charts[id].destroy();
+  charts[id]=new Chart(el,{type,data,options:{responsive:true,maintainAspectRatio:false,animation:{duration:400},...opts}});
+}
+
+function buildCharts(){
+  if(scenarios.length<2){
+    document.getElementById('chartsSection').style.display='none';
+    return;
+  }
+  document.getElementById('chartsSection').style.display='grid';
+  const sorted=[...scenarios].sort((a,b)=>new Date(a.date)-new Date(b.date));
+
+  /* Timeline */
+  const tlLabels=sorted.map(s=>new Date(s.date).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'}));
+  const tlBS=sorted.map(s=>s.results.bs);
+  const tlMC=sorted.map(s=>s.results.mc);
+  mkChart('chartTimeline','line',
+    {labels:tlLabels,datasets:[
+      {label:'BS',data:tlBS,borderColor:'#2563eb',borderWidth:2,pointRadius:3,tension:.3,fill:false},
+      {label:'MC',data:tlMC,borderColor:'#16a34a',borderWidth:1.5,borderDash:[4,3],pointRadius:2,tension:.3,fill:false}
+    ]},
+    {plugins:{legend:{display:true,labels:{font:{size:9},boxWidth:8}}},
+     scales:{x:{ticks:{maxTicksLimit:10,font:{size:8}},grid:{color:GRID}},
+             y:{ticks:{font:{size:9},callback:v=>v.toFixed(2)},grid:{color:GRID}}}});
+
+  /* Distribution */
+  const prices=scenarios.map(s=>s.results.bs).filter(v=>v!=null&&isFinite(v));
+  const mn=Math.min(...prices),mx=Math.max(...prices);
+  const BINS=10;const w=(mx-mn)/BINS||1;
+  const counts=Array(BINS).fill(0);
+  const binLabels=Array.from({length:BINS},(_,i)=>(mn+i*w+w/2).toFixed(1));
+  prices.forEach(v=>{const idx=Math.min(Math.floor((v-mn)/w),BINS-1);counts[idx]++;});
+  mkChart('chartDist','bar',
+    {labels:binLabels,datasets:[{data:counts,backgroundColor:'rgba(124,58,237,.55)',borderColor:'rgba(124,58,237,.8)',borderWidth:1,borderRadius:4}]},
+    {plugins:{legend:{display:false}},
+     scales:{x:{ticks:{maxTicksLimit:7,font:{size:9}},grid:{color:GRID}},
+             y:{ticks:{font:{size:9}},grid:{color:GRID}}}});
+
+  /* Error comparison */
+  const last10=[...sorted].slice(-10);
+  const errLabels=last10.map((_,i)=>'#'+(scenarios.length-10+i+1));
+  const errMC=last10.map(s=>{const bs=s.results.bs;const mc=s.results.mc;return bs>0?Math.abs(mc-bs)/bs*100:0;});
+  const errEM=last10.map(s=>{const bs=s.results.bs;const em=s.results.em;return bs>0?Math.abs(em-bs)/bs*100:0;});
+  const errML=last10.map(s=>{const bs=s.results.bs;const ml=s.results.ml;return bs>0?Math.abs(ml-bs)/bs*100:0;});
+  mkChart('chartErrComp','bar',
+    {labels:errLabels,datasets:[
+      {label:'MC %',data:errMC,backgroundColor:'rgba(22,163,74,.65)',borderRadius:3},
+      {label:'Euler %',data:errEM,backgroundColor:'rgba(249,115,22,.65)',borderRadius:3},
+      {label:'ML %',data:errML,backgroundColor:'rgba(124,58,237,.65)',borderRadius:3}
+    ]},
+    {plugins:{legend:{display:true,labels:{font:{size:9},boxWidth:8}}},
+     scales:{x:{ticks:{font:{size:9}},grid:{color:GRID}},
+             y:{ticks:{font:{size:9},callback:v=>v.toFixed(2)+'%'},grid:{color:GRID}}}});
+}
+
+/* ── Filtered & sorted data ── */
+function getFiltered(){
+  const search=document.getElementById('searchInput').value.toLowerCase();
+  const fType=document.getElementById('filterType').value;
+  const fBest=document.getElementById('filterBest').value;
+  const sortF=document.getElementById('sortField').value;
+  const sortD=document.getElementById('sortDir').value;
+
+  let data=scenarios.filter(s=>{
+    if(fType!=='all'&&s.params.type!==fType) return false;
+    if(fBest!=='all'&&s.results.best!==fBest) return false;
+    if(search){
+      const str=JSON.stringify(s).toLowerCase();
+      if(!str.includes(search)) return false;
+    }
+    return true;
+  });
+
+  data.sort((a,b)=>{
+    let av,bv;
+    if(sortF==='date'){av=new Date(a.date);bv=new Date(b.date);}
+    else if(sortF==='bs'){av=a.results.bs||0;bv=b.results.bs||0;}
+    else if(sortF==='S0'){av=a.params.S;bv=b.params.S;}
+    else if(sortF==='sig'){av=a.params.sig;bv=b.params.sig;}
+    else if(sortF==='err'){av=a.results.bestErr||99;bv=b.results.bestErr||99;}
+    else{av=0;bv=0;}
+    return sortD==='asc'?(av>bv?1:-1):(av<bv?1:-1);
+  });
+  return data;
+}
+
+/* ── Render table ── */
+function renderTable(){
+  const data=getFiltered();
+  const totalPages=Math.max(1,Math.ceil(data.length/PAGE_SIZE));
+  if(currentPage>totalPages) currentPage=1;
+  const pageData=data.slice((currentPage-1)*PAGE_SIZE,currentPage*PAGE_SIZE);
+
+  const tbody=document.getElementById('histBody');
+  if(data.length===0){
+    tbody.innerHTML=`<tr><td colspan="15"><div class="empty-state">
+      <div class="empty-icon">▤</div>
+      <div class="empty-title">Aucun scénario trouvé</div>
+      <div class="empty-sub">Ajustez les filtres ou ajoutez des scénarios depuis le tableau de bord.</div>
+    </div></td></tr>`;
+    document.getElementById('pagination').innerHTML='';
+    return;
+  }
+
+  const startIdx=(currentPage-1)*PAGE_SIZE;
+  tbody.innerHTML=pageData.map((s,i)=>{
+    const idx=startIdx+i+1;
+    const d=new Date(s.date);
+    const dateStr=d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'2-digit'});
+    const timeStr=d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    const typeColor=s.params.type==='call'?'var(--green)':'var(--orange)';
+    const typeBg=s.params.type==='call'?'var(--green-bg)':'#fff7ed';
+    const bestColor=s.results.best==='Monte-Carlo'?'var(--green)':s.results.best==='Euler-Maruyama'?'var(--orange)':'var(--purple)';
+    const errPct=s.results.bestErr!=null?s.results.bestErr.toFixed(3)+'%':'—';
+    const isSelected=s.id===selectedId;
+    return`<tr class="${isSelected?'selected':''}" onclick="selectScenario(${s.id})" style="cursor:pointer">
+      <td style="color:var(--muted);font-size:11px">${idx}</td>
+      <td style="white-space:nowrap">
+        <div style="font-size:12px;font-weight:600">${dateStr}</div>
+        <div style="font-size:10px;color:var(--muted)">${timeStr}</div>
+      </td>
+      <td><span class="badge" style="background:${typeBg};color:${typeColor}">${s.params.type.toUpperCase()}</span></td>
+      <td class="mono">${s.params.S.toFixed(1)}</td>
+      <td class="mono">${s.params.K.toFixed(1)}</td>
+      <td class="mono">${(s.params.r*100).toFixed(1)}%</td>
+      <td class="mono">${(s.params.sig*100).toFixed(1)}%</td>
+      <td class="mono">${s.params.T.toFixed(2)}a</td>
+      <td class="mono" style="color:var(--acc);font-weight:700">${(s.results.bs||0).toFixed(4)}</td>
+      <td class="mono" style="color:var(--green)">${(s.results.mc||0).toFixed(4)}</td>
+      <td class="mono" style="color:var(--orange)">${(s.results.em||0).toFixed(4)}</td>
+      <td class="mono" style="color:var(--purple)">${(s.results.ml||0).toFixed(4)}</td>
+      <td><span class="badge" style="background:${bestColor}22;color:${bestColor}">${(s.results.best||'—').replace('Monte-Carlo','MC').replace('Euler-Maruyama','Euler').replace('Machine Learning','ML')}</span></td>
+      <td class="mono" style="color:${parseFloat(errPct)<0.5?'var(--green)':parseFloat(errPct)<2?'var(--orange)':'var(--red)'}">${errPct}</td>
+      <td onclick="event.stopPropagation()" style="white-space:nowrap">
+        <button class="action-btn" onclick="selectScenario(${s.id})">⌕</button>
+        <button class="action-btn" onclick="duplicateScenario(${s.id})">⎘</button>
+        <button class="action-btn del" onclick="deleteScenario(${s.id})">×</button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  /* Pagination */
+  let pag='';
+  if(totalPages>1){
+    pag+=`<button class="page-btn" onclick="gotoPage(${currentPage-1})" ${currentPage<=1?'disabled':''}>‹</button>`;
+    for(let i=1;i<=totalPages;i++){
+      if(i===1||i===totalPages||Math.abs(i-currentPage)<=1)
+        pag+=`<button class="page-btn${i===currentPage?' active':''}" onclick="gotoPage(${i})">${i}</button>`;
+      else if(Math.abs(i-currentPage)===2)
+        pag+=`<span style="font-size:12px;color:var(--muted);padding:0 4px">…</span>`;
+    }
+    pag+=`<button class="page-btn" onclick="gotoPage(${currentPage+1})" ${currentPage>=totalPages?'disabled':''}>›</button>`;
+    pag+=`<span style="font-size:11px;color:var(--muted);margin-left:8px">${data.length} résultat${data.length>1?'s':''}</span>`;
+  }
+  document.getElementById('pagination').innerHTML=pag;
+}
+
+function gotoPage(p){currentPage=p;renderTable();}
+
+/* ── Select scenario ── */
+function selectScenario(id){
+  selectedId=selectedId===id?null:id;
+  if(!selectedId){closeDetail();renderTable();return;}
+  const s=scenarios.find(sc=>sc.id===id);
+  if(!s){return;}
+  renderTable();
+
+  const bs=s.results.bs,mc=s.results.mc,em=s.results.em,ml=s.results.ml;
+  const safeBS=bs>1e-6?bs:1e-6;
+  const items=[
+    {label:'Prix BS',val:(bs||0).toFixed(6),color:'var(--acc)'},
+    {label:'Monte-Carlo',val:(mc||0).toFixed(6),color:'var(--green)'},
+    {label:'Euler-Maruyama',val:(em||0).toFixed(6),color:'var(--orange)'},
+    {label:'Machine Learning',val:(ml||0).toFixed(6),color:'var(--purple)'},
+    {label:'Err. rel. MC', val: bs > 0 ? (Math.abs(mc - bs) / safeBS * 100).toFixed(3) + '%' : '—'},
+    {label:'Err. rel. Euler', val: bs > 0 ? (Math.abs(em - bs) / safeBS * 100).toFixed(3) + '%' : '—'},
+    {label:'Err. rel. ML', val: bs > 0 ? (Math.abs(ml - bs) / safeBS * 100).toFixed(3) + '%' : '—'},
+    {label:'Meilleure méthode',val:s.results.best||'—',color:'var(--cyan)'},
+  ];
+  const d=new Date(s.date);
+  document.getElementById('detailContent').innerHTML=`
+    <div style="font-size:12px;color:var(--muted);margin-bottom:10px">
+      ▤ ${d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})} à ${d.toLocaleTimeString('fr-FR')}
+      &nbsp;·&nbsp; Type : <b>${s.params.type.toUpperCase()}</b>
+      &nbsp;·&nbsp; S₀=${s.params.S} · K=${s.params.K} · r=${(s.params.r*100).toFixed(2)}% · σ=${(s.params.sig*100).toFixed(1)}% · T=${s.params.T.toFixed(2)}a
+    </div>
+    <div class="detail-grid">
+      ${items.map(it=>`<div class="detail-item">
+        <div class="detail-item-label">${it.label}</div>
+        <div class="detail-item-val" style="${it.color?'color:'+it.color:''}">${it.val}</div>
+      </div>`).join('')}
+    </div>`;
+  document.getElementById('detailPanel').classList.add('visible');
+  document.getElementById('detailPanel').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function closeDetail(){
+  selectedId=null;
+  document.getElementById('detailPanel').classList.remove('visible');
+  renderTable();
+}
+
+/* ── Delete ── */
+function deleteScenario(id){
+  scenarios=scenarios.filter(s=>s.id!==id);
+  saveScenarios(scenarios);
+  if(selectedId===id) closeDetail();
+  renderAll();
+  toast('× Scénario supprimé.');
+}
+
+/* ── Duplicate ── */
+function duplicateScenario(id){
+  const s=scenarios.find(sc=>sc.id===id);
+  if(!s) return;
+  const clone={...s,id:Date.now(),date:new Date().toISOString()};
+  scenarios.push(clone);
+  saveScenarios(scenarios);
+  renderAll();
+  toast('⎘ Scénario dupliqué.');
+}
+
+/* ── Clear all ── */
+let pendingAction=null;
+function confirmClearAll(){
+  document.getElementById('modalTitle').textContent='Effacer tout l\'historique';
+  document.getElementById('modalMsg').textContent=`Voulez-vous supprimer les ${scenarios.length} scénario(s) ? Cette action est irréversible.`;
+  pendingAction=()=>{scenarios=[];saveScenarios(scenarios);closeModal();renderAll();toast('× Historique effacé.');};
+  document.getElementById('modalConfirmBtn').onclick=pendingAction;
+  document.getElementById('modalBg').classList.add('open');
+}
+function closeModal(){document.getElementById('modalBg').classList.remove('open');}
+
+/* ── Filters reset ── */
+function resetFilters(){
+  document.getElementById('searchInput').value='';
+  document.getElementById('filterType').value='all';
+  document.getElementById('filterBest').value='all';
+  document.getElementById('sortField').value='date';
+  document.getElementById('sortDir').value='desc';
+  currentPage=1;
+  renderTable();
+}
+
+/* ── Export CSV ── */
+function exportAllCSV(){
+  if(!scenarios.length){toast('! Aucun scénario à exporter.');return;}
+  const rows=[
+    ['ID','Date','Type','S0','K','r','sigma','T','Prix BS','Monte-Carlo','Euler','ML','Meilleure méthode','Err. rel. (%)']
+  ].concat(scenarios.map((s,i)=>[
+    i+1,
+    new Date(s.date).toLocaleString('fr-FR'),
+    s.params.type,s.params.S,s.params.K,s.params.r,s.params.sig,s.params.T,
+    (s.results.bs||0).toFixed(6),(s.results.mc||0).toFixed(6),
+    (s.results.em||0).toFixed(6),(s.results.ml||0).toFixed(6),
+    s.results.best||'—',
+    (s.results.bestErr||0).toFixed(4)
+  ]));
+  const csv=rows.map(r=>r.join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='historique_opl.csv';a.click();
+  toast('✓ Historique exporté ('+scenarios.length+' scénarios).');
+}
+
+/* ── Render all ── */
+function renderAll(){
+  updateStats();
+  buildCharts();
+  renderTable();
+}
+
+
+/* ── Empty state check & init ── */
+if(scenarios.length===0){
+  const tbody=document.getElementById('histBody');
+  tbody.innerHTML=`<tr><td colspan="15">
+    <div class="empty-state">
+      <div class="empty-icon">▤</div>
+      <div class="empty-title">Historique vide</div>
+      <div class="empty-sub">
+        Aucun scénario sauvegardé.<br>
+        Cliquez sur <b>＋ Ajouter démos</b> pour générer 20 scénarios d'exemple,<br>
+        ou sauvegardez des calculs depuis le <a href="{{ url_for('dashboard') }}" style="color:var(--acc)">tableau de bord</a>.
+      </div>
+    </div>
+  </td></tr>`;
+}
+
+renderAll();
+</script>
+{% endblock %}

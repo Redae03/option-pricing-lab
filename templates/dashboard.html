@@ -1,0 +1,1215 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+  <style>
+    /* ─── Reset & Variables ─────────────────────────────── */
+
+
+    /* ─── Layout ─────────────────────────────────────────── */
+
+    /* ─── Sidebar ────────────────────────────────────────── */
+    
+    
+
+    /* ─── Content ────────────────────────────────────────── */
+    
+
+    /* ─── Method Cards ───────────────────────────────────── */
+    .methods-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    .method-card {
+      background: var(--card);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      transition: transform .2s, border-color .2s, box-shadow .2s;
+      cursor: default;
+    }
+    .method-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+    .method-card.bs-card:hover { border-color: var(--acc); }
+    .method-card.mc-card:hover { border-color: var(--green); }
+    .method-card.em-card:hover { border-color: var(--orange); }
+    .method-card.ml-card:hover { border-color: var(--purple); }
+    .method-card.cmp-card:hover { border-color: var(--cyan); }
+
+    .mc-header { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 12px; }
+    .mc-icon {
+      width: 34px; height: 34px;
+      border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 17px;
+      flex-shrink: 0;
+    }
+    .mc-name { font-size: 13px; font-weight: 700; }
+    .mc-sub { font-size: 10.5px; color: var(--muted); margin-top: 1px; }
+    .mc-features { list-style: none; margin-bottom: 14px; }
+    .mc-features li {
+      font-size: 11px;
+      color: #475569;
+      padding: 2.5px 0;
+      display: flex;
+      align-items: baseline;
+      gap: 5px;
+    }
+    .mc-features li::before { content: '•'; font-weight: 700; }
+    .mc-btn {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: var(--radius-sm);
+      border: none;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      font-family: var(--font);
+      transition: filter .15s, transform .1s;
+    }
+    .mc-btn:hover { filter: brightness(1.1); }
+    .mc-btn:active { transform: scale(.97); }
+
+    /* ─── Mid Grid ───────────────────────────────────────── */
+    .mid-grid {
+      display: grid;
+      grid-template-columns: 244px 1fr;
+      gap: 16px;
+      margin-bottom: 20px;
+      align-items: start;
+    }
+
+    /* ─── Card Base ──────────────────────────────────────── */
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 18px;
+    }
+    .panel-hdr {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .panel-hdr h3 { font-size: 14px; font-weight: 700; }
+    .panel-hdr .hdr-action { font-size: 16px; cursor: pointer; opacity: .7; }
+    .panel-hdr .hdr-action:hover { opacity: 1; }
+
+    /* ─── Form ───────────────────────────────────────────── */
+    .form-group { margin-bottom: 11px; }
+    .form-group label {
+      display: block;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--muted);
+      margin-bottom: 4px;
+      letter-spacing: .2px;
+    }
+    .form-group select,
+    .form-group input[type="number"] {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-family: var(--font);
+      color: var(--txt);
+      background: #fff;
+      transition: border-color .15s, box-shadow .15s;
+      outline: none;
+      -moz-appearance: textfield;
+    }
+    .form-group input[type="number"]::-webkit-inner-spin-button,
+    .form-group input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+    .form-group select:focus,
+    .form-group input[type="number"]:focus {
+      border-color: var(--acc);
+      box-shadow: 0 0 0 3px rgba(37,99,235,.1);
+    }
+    .input-wrap { position: relative; }
+    .input-wrap input { padding-right: 40px; }
+    .input-unit {
+      position: absolute;
+      right: 10px; top: 50%;
+      transform: translateY(-50%);
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 500;
+      pointer-events: none;
+    }
+
+    .update-btn {
+      width: 100%;
+      padding: 10px 14px;
+      background: var(--acc);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: var(--font);
+      margin-top: 6px;
+      transition: background .15s, transform .1s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .update-btn:hover { background: var(--acc-dark); }
+    .update-btn:active { transform: scale(.98); }
+    .update-btn:disabled { opacity: .65; cursor: not-allowed; }
+
+    /* ─── Results Panel ──────────────────────────────────── */
+    .results-summary {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    .res-card {
+      border-radius: var(--radius-md);
+      padding: 13px 12px;
+      border: 1px solid var(--border);
+    }
+    .res-label {
+      font-size: 9.5px;
+      font-weight: 600;
+      letter-spacing: .6px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 2px;
+    }
+    .res-method { font-size: 12px; font-weight: 700; margin-bottom: 4px; }
+    .res-price {
+      font-size: 22px;
+      font-weight: 700;
+      font-family: var(--mono);
+      margin-bottom: 4px;
+      letter-spacing: -.5px;
+    }
+    .res-sub { font-size: 10px; color: var(--muted); line-height: 1.4; }
+
+    /* Mini bars grid */
+    .mini-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+    .mini-section-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .mini-bar-row {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 11px;
+      margin-bottom: 5px;
+    }
+    .mini-bar-label { width: 80px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .mini-bar-track {
+      flex: 1;
+      background: #f1f5f9;
+      border-radius: 4px;
+      height: 8px;
+      overflow: hidden;
+    }
+    .mini-bar-fill {
+      height: 8px;
+      border-radius: 4px;
+      transition: width .5s cubic-bezier(.4,0,.2,1);
+      width: 0%;
+    }
+    .mini-bar-val {
+      min-width: 46px;
+      text-align: right;
+      font-family: var(--mono);
+      font-size: 10.5px;
+    }
+    .stat-row { font-size: 11px; color: var(--muted); line-height: 2; }
+    .stat-row span { color: var(--txt); font-family: var(--mono); }
+
+    /* Timestamp */
+    .timestamp {
+      font-size: 11px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .ts-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      display: inline-block;
+    }
+
+    /* ─── Charts ─────────────────────────────────────────── */
+    .charts-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .chart-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 18px;
+    }
+    .chart-card h4 {
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 14px;
+      color: var(--txt);
+    }
+    .chart-wrap { position: relative; height: 165px; }
+
+    /* ─── Bottom Grid ────────────────────────────────────── */
+    .bottom-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .quick-card, .export-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 18px;
+    }
+    .quick-card h4, .export-card h4 {
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 14px;
+    }
+    .quick-items {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .qi {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 11px 12px;
+      cursor: pointer;
+      transition: border-color .15s, background .15s, transform .1s;
+    }
+    .qi:hover { border-color: var(--acc); background: var(--acc-light); transform: translateY(-1px); }
+    .qi:active { transform: scale(.98); }
+    .qi-title { font-size: 11.5px; font-weight: 700; margin-bottom: 3px; }
+    .qi-icon { font-size: 16px; margin-bottom: 6px; display: block; }
+    .qi-desc { font-size: 10px; color: var(--muted); line-height: 1.4; }
+
+    .export-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .exp-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #fff;
+      cursor: pointer;
+      font-family: var(--font);
+      transition: border-color .15s, background .15s, transform .1s;
+      text-align: left;
+    }
+    .exp-btn:hover { border-color: var(--acc); background: var(--acc-light); transform: translateY(-1px); }
+    .exp-btn:active { transform: scale(.98); }
+    .exp-ic {
+      width: 30px; height: 30px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px;
+      flex-shrink: 0;
+    }
+    .exp-name { font-size: 12px; font-weight: 600; }
+    .exp-sub { font-size: 10px; color: var(--muted); margin-top: 1px; }
+
+    /* ─── Footer ─────────────────────────────────────────── */
+    .page-footer {
+      font-size: 10px;
+      color: var(--muted2);
+      text-align: center;
+      padding: 14px 0 4px;
+      font-style: italic;
+    }
+
+    /* ─── Spinner ────────────────────────────────────────── */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spin { display: inline-block; animation: spin .7s linear infinite; }
+
+
+    /* ─── Responsive ─────────────────────────────────────── */
+    @media (max-width: 1280px) {
+      .methods-grid { grid-template-columns: repeat(3, 1fr); }
+      .results-summary { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 960px) {
+      .sidebar { width: 220px; min-width: 220px; }
+      .mid-grid { grid-template-columns: 1fr; }
+      .charts-row { grid-template-columns: 1fr; }
+      .bottom-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+
+
+
+      <!-- ── Method Cards ───────────────────────────── -->
+      <div class="methods-grid">
+
+        <!-- Black-Scholes -->
+        <div class="method-card bs-card">
+          <div class="mc-header">
+            <div class="mc-icon" style="background:#dbeafe">Σ</div>
+            <div>
+              <div class="mc-name" style="color:var(--acc)">Black-Scholes</div>
+              <div class="mc-sub">Formule analytique</div>
+            </div>
+          </div>
+          <ul class="mc-features" style="--dot:var(--acc)">
+            <li style="--dot:var(--acc)">Solution fermée</li>
+            <li>Très rapide</li>
+            <li>Référence théorique</li>
+          </ul>
+          <a class="mc-btn" style="background:var(--acc);color:#fff;text-decoration:none"
+             href="{{ url_for('black_scholes_page') }}">
+            Utiliser →
+          </a>
+        </div>
+
+        <!-- Monte-Carlo -->
+        <div class="method-card mc-card">
+          <div class="mc-header">
+            <div class="mc-icon" style="background:#dcfce7">◈</div>
+            <div>
+              <div class="mc-name" style="color:var(--green)">Monte-Carlo</div>
+              <div class="mc-sub">Simulation classique</div>
+            </div>
+          </div>
+          <ul class="mc-features">
+            <li>Simulation de S<sub>T</sub></li>
+            <li>Intervalle de confiance</li>
+            <li>Convergence 1/√M</li>
+          </ul>
+          <a class="mc-btn" style="background:var(--green);color:#fff;text-decoration:none"
+             href="{{ url_for('monte_carlo_page') }}">
+            Utiliser →
+          </a>
+        </div>
+
+        <!-- Euler-Maruyama -->
+        <div class="method-card em-card">
+          <div class="mc-header">
+            <div class="mc-icon" style="background:#fff7ed">⌁</div>
+            <div>
+              <div class="mc-name" style="color:var(--orange)">Euler-Maruyama</div>
+              <div class="mc-sub">Discrétisation d'EDS</div>
+            </div>
+          </div>
+          <ul class="mc-features">
+            <li>Simulation de trajectoires</li>
+            <li>Prend en compte le chemin</li>
+            <li>Biais de discrétisation</li>
+          </ul>
+          <a class="mc-btn" style="background:var(--orange);color:#fff;text-decoration:none"
+             href="{{ url_for('euler_maruyama_page') }}">
+            Utiliser →
+          </a>
+        </div>
+
+        <!-- Machine Learning -->
+        <div class="method-card ml-card">
+          <div class="mc-header">
+            <div class="mc-icon" style="background:#faf5ff">◉</div>
+            <div>
+              <div class="mc-name" style="color:var(--purple)">Machine Learning</div>
+              <div class="mc-sub">Modèle d'approximation</div>
+            </div>
+          </div>
+          <ul class="mc-features">
+            <li>Apprentissage supervisé</li>
+            <li>Prédiction très rapide</li>
+            <li>Nécessite entraînement</li>
+          </ul>
+          <a class="mc-btn" style="background:var(--purple);color:#fff;text-decoration:none"
+             href="{{ url_for('machine_learning_page') }}">
+            Utiliser →
+          </a>
+        </div>
+
+        <!-- Comparaison -->
+        <div class="method-card cmp-card">
+          <div class="mc-header">
+            <div class="mc-icon" style="background:#ecfeff">▥</div>
+            <div>
+              <div class="mc-name" style="color:var(--cyan)">Comparaison</div>
+              <div class="mc-sub">Toutes les méthodes</div>
+            </div>
+          </div>
+          <ul class="mc-features">
+            <li>Compare Black-Scholes</li>
+            <li>Monte-Carlo, Euler</li>
+            <li>et Machine Learning</li>
+          </ul>
+          <a class="mc-btn" style="background:var(--cyan);color:#fff;text-decoration:none"
+             href="{{ url_for('comparaison_page') }}">
+            Comparer →
+          </a>
+        </div>
+
+      </div>
+
+      <!-- ── Mid Grid : Params + Results ───────────── -->
+      <div class="mid-grid">
+
+        <!-- Parameters Form -->
+        <div class="panel">
+          <div class="panel-hdr">
+            <h3>Paramètres de l'option</h3>
+            <span class="hdr-action" title="Réinitialiser" onclick="resetParams()">↺</span>
+          </div>
+
+          <div class="form-group">
+            <label>Type d'option</label>
+            <select id="optType">
+              <option value="call">Call</option>
+              <option value="put">Put</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Prix initial S₀</label>
+            <input type="number" id="S0" value="100" min="1" step="1">
+          </div>
+
+          <div class="form-group">
+            <label>Prix d'exercice K</label>
+            <input type="number" id="K" value="100" min="1" step="1">
+          </div>
+
+          <div class="form-group">
+            <label>Taux sans risque r</label>
+            <div class="input-wrap">
+              <input type="number" id="r" value="0.05" min="0" max="1" step="0.01" oninput="updateUnit('r','rUnit',v=>Math.round(v*100)+'%')">
+              <span class="input-unit" id="rUnit">5 %</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Volatilité σ</label>
+            <div class="input-wrap">
+              <input type="number" id="sigma" value="0.20" min="0.01" max="2" step="0.01" oninput="updateUnit('sigma','sigmaUnit',v=>Math.round(v*100)+'%')">
+              <span class="input-unit" id="sigmaUnit">20 %</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Maturité T (années)</label>
+            <input type="number" id="T" value="1.00" min="0.01" step="0.25">
+          </div>
+
+          <div class="form-group">
+            <label>Nombre de simulations M</label>
+            <div class="input-wrap">
+              <input type="number" id="M" value="10000" min="1000" max="200000" step="1000"
+                     oninput="updateUnit('M','MUnit',v=>parseInt(v).toLocaleString('fr-FR'))">
+              <span class="input-unit" id="MUnit">10 000</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Nombre de pas N (Euler)</label>
+            <div class="input-wrap">
+              <input type="number" id="N" value="252" min="10" max="2000" step="1"
+                     oninput="updateUnit('N','NUnit',v=>parseInt(v).toLocaleString('fr-FR'))">
+              <span class="input-unit" id="NUnit">252</span>
+            </div>
+          </div>
+
+          <button class="update-btn" id="calcBtn" onclick="computeAll()">
+            Mettre à jour
+          </button>
+        </div>
+
+        <!-- Results Panel -->
+        <div class="panel">
+          <div class="panel-hdr">
+            <h3>Résumé des résultats</h3>
+            <div class="timestamp" id="ts-display">
+              <span style="color:var(--muted)">— non calculé —</span>
+            </div>
+          </div>
+
+          <!-- 5 result cards -->
+          <div class="results-summary">
+            <!-- Black-Scholes -->
+            <div class="res-card" style="background:var(--blue-bg);border-color:var(--blue-bdr)">
+              <div class="res-label">Référence</div>
+              <div class="res-method">Black-Scholes</div>
+              <div class="res-price" id="r-bs" style="color:var(--acc)">—</div>
+              <div class="res-sub">Référence</div>
+            </div>
+            <!-- Monte-Carlo -->
+            <div class="res-card" style="background:var(--green-bg);border-color:var(--green-bdr)">
+              <div class="res-label">Estimation</div>
+              <div class="res-method">Monte-Carlo</div>
+              <div class="res-price" id="r-mc" style="color:var(--green)">—</div>
+              <div class="res-sub" id="r-mc-ci">IC 95 % [— ; —]</div>
+            </div>
+            <!-- Euler -->
+            <div class="res-card" style="background:var(--orange-bg);border-color:var(--orange-bdr)">
+              <div class="res-label">Estimation</div>
+              <div class="res-method">Euler-Maruyama</div>
+              <div class="res-price" id="r-em" style="color:var(--orange)">—</div>
+              <div class="res-sub" id="r-em-bias">Biais ≈ —</div>
+            </div>
+            <!-- ML -->
+            <div class="res-card" style="background:var(--purple-bg);border-color:var(--purple-bdr)">
+              <div class="res-label">Prédiction</div>
+              <div class="res-method">Machine Learning</div>
+              <div class="res-price" id="r-ml" style="color:var(--purple)">—</div>
+              <div class="res-sub">Modèle : Random Forest</div>
+            </div>
+            <!-- Best -->
+            <div class="res-card" style="background:var(--cyan-bg);border-color:var(--cyan-bdr)">
+              <div class="res-label">Meilleure méthode</div>
+              <div class="res-method">(Hors référence)</div>
+              <div class="res-price" id="r-best" style="color:var(--cyan);font-size:14px;padding-top:6px">—</div>
+              <div class="res-sub" id="r-best-err">Erreur relative : —</div>
+            </div>
+          </div>
+
+          <!-- Mini stats -->
+          <div class="mini-grid">
+            <!-- Erreur relative -->
+            <div>
+              <div class="mini-section-title">Erreur relative (%)</div>
+              <div class="mini-bar-row">
+                <span class="mini-bar-label" style="color:var(--green)">Monte-Carlo</span>
+                <div class="mini-bar-track"><div id="eb-mc" class="mini-bar-fill" style="background:var(--green)"></div></div>
+                <span class="mini-bar-val" id="et-mc">—</span>
+              </div>
+              <div class="mini-bar-row">
+                <span class="mini-bar-label" style="color:var(--orange)">Euler</span>
+                <div class="mini-bar-track"><div id="eb-em" class="mini-bar-fill" style="background:var(--orange)"></div></div>
+                <span class="mini-bar-val" id="et-em">—</span>
+              </div>
+              <div class="mini-bar-row">
+                <span class="mini-bar-label" style="color:var(--purple)">ML</span>
+                <div class="mini-bar-track"><div id="eb-ml" class="mini-bar-fill" style="background:var(--purple)"></div></div>
+                <span class="mini-bar-val" id="et-ml">—</span>
+              </div>
+            </div>
+            <!-- Temps de calcul -->
+            <div>
+              <div class="mini-section-title">Temps de calcul</div>
+              <div class="mini-bar-row">
+                <span class="mini-bar-label" style="color:var(--acc)">B-S</span>
+                <div class="mini-bar-track"><div id="tb-bs" class="mini-bar-fill" style="background:var(--acc)"></div></div>
+                <span class="mini-bar-val" id="tt-bs">—</span>
+              </div>
+              <div class="mini-bar-row">
+                <span class="mini-bar-label" style="color:var(--green)">Monte-Carlo</span>
+                <div class="mini-bar-track"><div id="tb-mc" class="mini-bar-fill" style="background:var(--green)"></div></div>
+                <span class="mini-bar-val" id="tt-mc">—</span>
+              </div>
+              <div class="mini-bar-row">
+                <span class="mini-bar-label" style="color:var(--orange)">Euler</span>
+                <div class="mini-bar-track"><div id="tb-em" class="mini-bar-fill" style="background:var(--orange)"></div></div>
+                <span class="mini-bar-val" id="tt-em">—</span>
+              </div>
+              <div class="mini-bar-row">
+                <span class="mini-bar-label" style="color:var(--purple)">ML</span>
+                <div class="mini-bar-track"><div id="tb-ml" class="mini-bar-fill" style="background:var(--purple)"></div></div>
+                <span class="mini-bar-val" id="tt-ml">—</span>
+              </div>
+            </div>
+            <!-- Statistiques -->
+            <div>
+              <div class="mini-section-title">Statistiques Black-Scholes</div>
+              <div class="stat-row">d₁ : <span id="stat-d1">—</span></div>
+              <div class="stat-row">d₂ : <span id="stat-d2">—</span></div>
+              <div class="stat-row">Δ (delta) : <span id="stat-delta">—</span></div>
+              <div class="stat-row">σ MC : <span id="stat-mcstd">—</span></div>
+              <div class="stat-row" id="stat-gamma-row">Γ (gamma) : <span id="stat-gamma">—</span></div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /.mid-grid -->
+
+      <!-- ── 3 Charts ────────────────────────────────── -->
+      <div class="charts-row">
+        <div class="chart-card">
+          <h4>Comparaison des prix</h4>
+          <div class="chart-wrap">
+            <canvas id="chartPrices"
+              role="img"
+              aria-label="Graphique en barres comparant les prix calculés par Black-Scholes, Monte-Carlo, Euler-Maruyama et Machine Learning">
+              Données non disponibles — cliquez sur Mettre à jour.
+            </canvas>
+          </div>
+        </div>
+        <div class="chart-card">
+          <h4>Erreur relative (%)</h4>
+          <div class="chart-wrap">
+            <canvas id="chartErrors"
+              role="img"
+              aria-label="Graphique en barres des erreurs relatives par rapport à Black-Scholes">
+              Données non disponibles.
+            </canvas>
+          </div>
+        </div>
+        <div class="chart-card">
+          <h4>Temps de calcul (secondes)</h4>
+          <div class="chart-wrap">
+            <canvas id="chartTimes"
+              role="img"
+              aria-label="Graphique en barres logarithmique des temps de calcul en secondes">
+              Données non disponibles.
+            </canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Bottom : Quick analysis + Export ──────── -->
+      <div class="bottom-grid">
+
+        <!-- Analyses rapides -->
+        <div class="quick-card">
+          <h4>Analyses rapides</h4>
+          <div class="quick-items">
+            <div class="qi" onclick="toast('Convergence Monte-Carlo — ouvrez la page Monte-Carlo pour le graphique détaillé.')">
+              <span class="qi-icon">Σ</span>
+              <div class="qi-title" style="color:var(--green)">Convergence Monte-Carlo</div>
+              <div class="qi-desc">Étudier l'effet du nombre de simulations</div>
+            </div>
+            <div class="qi" onclick="toast('Effet du pas Euler — ouvrez la page Euler-Maruyama pour l\'analyse du biais.')">
+              <span class="qi-icon">⌁</span>
+              <div class="qi-title" style="color:var(--orange)">Effet du pas (Euler)</div>
+              <div class="qi-desc">Voir l'influence de N sur le biais</div>
+            </div>
+            <div class="qi" onclick="window.location.href='{{ url_for('sensibilite_page') }}'">
+              <span class="qi-icon">≋</span>
+              <div class="qi-title" style="color:var(--purple)">Sensibilité des paramètres</div>
+              <div class="qi-desc">Impact de S₀, σ, r, T sur le prix</div>
+            </div>
+            <div class="qi" onclick="toast('Distribution des payoffs — calculez d\'abord les résultats, puis ouvrez Monte-Carlo.')">
+              <span class="qi-icon">◌</span>
+              <div class="qi-title" style="color:var(--cyan)">Distribution des payoffs</div>
+              <div class="qi-desc">Visualiser les payoffs simulés</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Export -->
+        <div class="export-card">
+          <h4>Export des résultats</h4>
+          <div class="export-grid">
+            <button class="exp-btn" onclick="exportCSV()">
+              <div class="exp-ic" style="background:#dcfce7">⇩</div>
+              <div>
+                <div class="exp-name" style="color:var(--green)">Exporter en CSV</div>
+                <div class="exp-sub">Données brutes</div>
+              </div>
+            </button>
+            <button class="exp-btn" onclick="exportExcel()">
+              <div class="exp-ic" style="background:#dcfce7">↗</div>
+              <div>
+                <div class="exp-name" style="color:var(--green)">Exporter en Excel</div>
+                <div class="exp-sub">Tableau formaté</div>
+              </div>
+            </button>
+            <button class="exp-btn" onclick="exportPDF()">
+              <div class="exp-ic" style="background:#fee2e2">◫</div>
+              <div>
+                <div class="exp-name" style="color:var(--red)">Rapport PDF</div>
+                <div class="exp-sub">Rapport complet</div>
+              </div>
+            </button>
+            <button class="exp-btn" onclick="saveScenario()">
+              <div class="exp-ic" style="background:#dbeafe">▤</div>
+              <div>
+                <div class="exp-name" style="color:var(--acc)">Sauvegarder scénario</div>
+                <div class="exp-sub">Historique local</div>
+              </div>
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="page-footer">
+        Les résultats de Monte-Carlo et Euler-Maruyama peuvent varier à chaque exécution en raison de l'aléatoire.
+      </div>
+      
+{% endblock %}
+
+
+
+{% block scripts %}
+
+<!-- ════════════════════════════════════════════════
+     JAVASCRIPT — Calculs financiers + UI
+════════════════════════════════════════════════ -->
+<script>
+/* ─── Math helpers ──────────────────────────── */
+function normCDF(x){ return OPL.normCDF(x); }
+
+function normPDF(x) {
+  return Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI);
+}
+
+/* Box-Muller transform → standard normal */
+function randn() {
+  const u1 = Math.random(), u2 = Math.random();
+  return Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+}
+
+/* ─── Pricing models ────────────────────────── */
+function blackScholes(S, K, r, sig, T, type) {
+  const sqrtT = Math.sqrt(T);
+  const d1 = (Math.log(S / K) + (r + 0.5 * sig * sig) * T) / (sig * sqrtT);
+  const d2 = d1 - sig * sqrtT;
+  const df  = Math.exp(-r * T);
+  let price, delta, gamma;
+  if (type === 'call') {
+    price = S * normCDF(d1) - K * df * normCDF(d2);
+    delta = normCDF(d1);
+  } else {
+    price = K * df * normCDF(-d2) - S * normCDF(-d1);
+    delta = normCDF(d1) - 1;
+  }
+  gamma = normPDF(d1) / (S * sig * sqrtT);
+  return { price, d1, d2, delta, gamma };
+}
+
+function monteCarlo(S, K, r, sig, T, M, type) {
+  const sqrtT   = Math.sqrt(T);
+  const discount = Math.exp(-r * T);
+  let sum = 0, sum2 = 0;
+  for (let i = 0; i < M; i++) {
+    const Z  = randn();
+    const ST = S * Math.exp((r - 0.5 * sig * sig) * T + sig * sqrtT * Z);
+    const pf = type === 'call' ? Math.max(ST - K, 0) : Math.max(K - ST, 0);
+    sum  += pf;
+    sum2 += pf * pf;
+  }
+  const mean     = sum / M;
+  const variance = sum2 / M - mean * mean;
+  const stdErr   = Math.sqrt(variance / M) * discount;
+  const price    = mean * discount;
+  const ci95     = [price - 1.96 * stdErr, price + 1.96 * stdErr];
+  const std      = Math.sqrt(variance) * discount;
+  return { price, std, ci95 };
+}
+
+function eulerMaruyama(S, K, r, sig, T, M, N, type) {
+  const dt       = T / N;
+  const sqrtDt   = Math.sqrt(dt);
+  const discount = Math.exp(-r * T);
+  let sum = 0;
+  const simM = Math.min(M, 8000); /* cap for performance */
+  for (let i = 0; i < simM; i++) {
+    let St = S;
+    for (let j = 0; j < N; j++) {
+      St += St * (r * dt + sig * sqrtDt * randn());
+    }
+    const pf = type === 'call' ? Math.max(St - K, 0) : Math.max(K - St, 0);
+    sum += pf;
+  }
+  return { price: (sum / simM) * discount };
+}
+
+/* Prédiction du vrai modèle scikit-learn entraîné côté serveur (voir static/js/pricing_core.js). */
+
+/* ─── State ─────────────────────────────────── */
+let lastResults = null;
+let chartP = null, chartE = null, chartT = null;
+
+/* ─── Getters ───────────────────────────────── */
+function P() {
+  return {
+    type : document.getElementById('optType').value,
+    S    : parseFloat(document.getElementById('S0').value)    || 100,
+    K    : parseFloat(document.getElementById('K').value)     || 100,
+    r    : parseFloat(document.getElementById('r').value)     || 0.05,
+    sig  : parseFloat(document.getElementById('sigma').value) || 0.20,
+    T    : parseFloat(document.getElementById('T').value)     || 1,
+    M    : parseInt(document.getElementById('M').value)       || 10000,
+    N    : parseInt(document.getElementById('N').value)       || 252
+  };
+}
+
+/* ─── Main compute ──────────────────────────── */
+function computeAll() {
+  const btn = document.getElementById('calcBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin">⟳</span> Calcul en cours…';
+
+  setTimeout(async () => {
+    const p = P();
+
+    const t0 = performance.now();
+    const bs = blackScholes(p.S, p.K, p.r, p.sig, p.T, p.type);
+    const tBS = (performance.now() - t0) / 1000;
+
+    const t1 = performance.now();
+    const mc = monteCarlo(p.S, p.K, p.r, p.sig, p.T, p.M, p.type);
+    const tMC = (performance.now() - t1) / 1000;
+
+    const t2 = performance.now();
+    const em = eulerMaruyama(p.S, p.K, p.r, p.sig, p.T, p.M, p.N, p.type);
+    const tEM = (performance.now() - t2) / 1000;
+
+    let ml, tML;
+    try {
+      const mlRes = await OPL.mlPredictMany([{ S: p.S, K: p.K, r: p.r, sigma: p.sig, T: p.T, option_type: p.type }]);
+      ml = { price: mlRes.prices[0] };
+      tML = mlRes.elapsed_s;
+    } catch (e) {
+      toast('⚠ Modèle ML indisponible : ' + e.message);
+      btn.disabled = false; btn.innerHTML = 'Mettre à jour';
+      return;
+    }
+
+    const safe = bs.price > 0.0001 ? bs.price : 0.0001;
+    const errMC = Math.abs(mc.price - bs.price) / safe * 100;
+    const errEM = Math.abs(em.price - bs.price) / safe * 100;
+    const errML = Math.abs(ml.price - bs.price) / safe * 100;
+
+    const ranking = [
+      { n: 'Monte-Carlo',    e: errMC },
+      { n: 'Euler-Maruyama', e: errEM },
+      { n: 'Machine Learning', e: errML }
+    ].sort((a, b) => a.e - b.e);
+
+    lastResults = { bs, mc, em, ml, tBS, tMC, tEM, tML,
+                    errMC, errEM, errML, best: ranking[0], p };
+
+    updateUI(lastResults);
+
+    btn.disabled = false;
+    btn.innerHTML = '✓ Mettre à jour';
+    setTimeout(() => { btn.innerHTML = 'Mettre à jour'; }, 1800);
+  }, 20);
+}
+
+/* ─── UI update ─────────────────────────────── */
+function fmt(v, d = 4)  { return v == null ? '—' : v.toFixed(d); }
+function fmtPct(v)       { return v == null ? '—' : v.toFixed(2) + '%'; }
+function fmtTime(v)      { return v == null ? '—' : v.toFixed(4) + 's'; }
+
+function setBar(fillId, valId, value, maxVal, formatter) {
+  const pct = Math.min(value / maxVal * 100, 100);
+  document.getElementById(fillId).style.width = pct + '%';
+  document.getElementById(valId).textContent  = formatter(value);
+}
+
+function updateUI(res) {
+  const { bs, mc, em, ml, tBS, tMC, tEM, tML,
+          errMC, errEM, errML, best } = res;
+
+  /* Result cards */
+  document.getElementById('r-bs').textContent      = fmt(bs.price);
+  document.getElementById('r-mc').textContent      = fmt(mc.price);
+  document.getElementById('r-mc-ci').textContent   = `IC 95 % [${fmt(mc.ci95[0])} ; ${fmt(mc.ci95[1])}]`;
+  document.getElementById('r-em').textContent      = fmt(em.price);
+  document.getElementById('r-em-bias').textContent = `Biais ≈ ${fmt(Math.abs(em.price - bs.price))}`;
+  document.getElementById('r-ml').textContent      = fmt(ml.price);
+  document.getElementById('r-best').textContent    = best.n;
+  document.getElementById('r-best-err').textContent= `Erreur relative : ${fmtPct(best.e)}`;
+
+  /* Statistics */
+  document.getElementById('stat-d1').textContent    = fmt(bs.d1, 4);
+  document.getElementById('stat-d2').textContent    = fmt(bs.d2, 4);
+  document.getElementById('stat-delta').textContent = fmt(bs.delta, 4);
+  document.getElementById('stat-mcstd').textContent = fmt(mc.std, 4);
+  document.getElementById('stat-gamma').textContent = fmt(bs.gamma, 6);
+
+  /* Timestamp */
+  const now = new Date();
+  document.getElementById('ts-display').innerHTML =
+    `<span class="ts-dot"></span> Dernière mise à jour : ${now.toLocaleDateString('fr-FR')} ${now.toLocaleTimeString('fr-FR')} <span style="cursor:pointer;margin-left:4px" onclick="computeAll()">↻</span>`;
+
+  /* Error bars */
+  const maxErr = Math.max(errMC, errEM, errML, 0.01) * 1.15;
+  setBar('eb-mc', 'et-mc', errMC, maxErr, fmtPct);
+  setBar('eb-em', 'et-em', errEM, maxErr, fmtPct);
+  setBar('eb-ml', 'et-ml', errML, maxErr, fmtPct);
+
+  /* Time bars */
+  const maxT = Math.max(tBS, tMC, tEM, tML, 0.0001) * 1.15;
+  setBar('tb-bs', 'tt-bs', tBS, maxT, fmtTime);
+  setBar('tb-mc', 'tt-mc', tMC, maxT, fmtTime);
+  setBar('tb-em', 'tt-em', tEM, maxT, fmtTime);
+  setBar('tb-ml', 'tt-ml', tML, maxT, fmtTime);
+
+  /* Charts */
+  updateCharts(bs.price, mc.price, em.price, ml.price,
+               errMC, errEM, errML, tBS, tMC, tEM, tML);
+}
+
+/* ─── Charts ────────────────────────────────── */
+const COLORS = {
+  bs: '#3b82f6', mc: '#22c55e', em: '#f97316', ml: '#8b5cf6'
+};
+const FONT_SIZE = 10;
+const GRID_COLOR = '#f1f5f9';
+
+function destroyChart(instance) {
+  if (instance) { try { instance.destroy(); } catch(e) {} }
+}
+
+function baseOpts(extraScales, extraPlugins) {
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: { duration: 550, easing: 'easeInOutQuart' },
+    plugins: {
+      legend: { display: false },
+      ...extraPlugins
+    },
+    scales: extraScales
+  };
+}
+
+function updateCharts(bsP, mcP, emP, mlP, errMC, errEM, errML, tBS, tMC, tEM, tML) {
+  const labels4 = ['Black-Scholes', 'Monte-Carlo', 'Euler-Maruyama', 'Machine Learning'];
+  const labels3 = ['Monte-Carlo', 'Euler-Maruyama', 'Machine Learning'];
+
+  /* ── Chart 1 : Prices ── */
+  destroyChart(chartP);
+  const priceMin = Math.min(bsP, mcP, emP, mlP) * 0.995;
+  chartP = new Chart(document.getElementById('chartPrices'), {
+    type: 'bar',
+    data: {
+      labels: labels4,
+      datasets: [{
+        data: [bsP, mcP, emP, mlP],
+        backgroundColor: [COLORS.bs, COLORS.mc, COLORS.em, COLORS.ml],
+        borderRadius: 6,
+        borderSkipped: false
+      }]
+    },
+    options: baseOpts(
+      {
+        y: {
+          min: priceMin,
+          ticks: { callback: v => v.toFixed(2), font: { size: FONT_SIZE } },
+          grid: { color: GRID_COLOR }
+        },
+        x: { ticks: { font: { size: 9 } }, grid: { display: false } }
+      },
+      {
+        tooltip: { callbacks: { label: c => ' Prix : ' + c.raw.toFixed(4) } },
+        datalabels: false
+      }
+    )
+  });
+
+  /* ── Chart 2 : Errors ── */
+  destroyChart(chartE);
+  chartE = new Chart(document.getElementById('chartErrors'), {
+    type: 'bar',
+    data: {
+      labels: labels3,
+      datasets: [{
+        data: [errMC, errEM, errML],
+        backgroundColor: [COLORS.mc, COLORS.em, COLORS.ml],
+        borderRadius: 6,
+        borderSkipped: false
+      }]
+    },
+    options: baseOpts(
+      {
+        y: {
+          ticks: { callback: v => v.toFixed(2) + '%', font: { size: FONT_SIZE } },
+          grid: { color: GRID_COLOR }
+        },
+        x: { ticks: { font: { size: 9 } }, grid: { display: false } }
+      },
+      { tooltip: { callbacks: { label: c => ' Erreur : ' + c.raw.toFixed(3) + '%' } } }
+    )
+  });
+
+  /* ── Chart 3 : Times (log scale) ── */
+  destroyChart(chartT);
+  chartT = new Chart(document.getElementById('chartTimes'), {
+    type: 'bar',
+    data: {
+      labels: labels4,
+      datasets: [{
+        data: [tBS, tMC, tEM, tML],
+        backgroundColor: [COLORS.bs, COLORS.mc, COLORS.em, COLORS.ml],
+        borderRadius: 6,
+        borderSkipped: false
+      }]
+    },
+    options: baseOpts(
+      {
+        y: {
+          type: 'logarithmic',
+          ticks: {
+            callback: v => {
+              if (v === 0) return '0';
+              const e = Math.floor(Math.log10(v));
+              return [0.001, 0.01, 0.1, 1, 10].includes(parseFloat(v.toPrecision(1))) ? v.toPrecision(1) + 's' : null;
+            },
+            font: { size: FONT_SIZE }
+          },
+          grid: { color: GRID_COLOR }
+        },
+        x: { ticks: { font: { size: 9 } }, grid: { display: false } }
+      },
+      { tooltip: { callbacks: { label: c => ' Temps : ' + c.raw.toFixed(5) + 's' } } }
+    )
+  });
+}
+
+
+/* ─── Reset params ──────────────────────────── */
+function resetParams() {
+  document.getElementById('optType').value = 'call';
+  document.getElementById('S0').value      = '100';
+  document.getElementById('K').value       = '100';
+  document.getElementById('r').value       = '0.05';
+  document.getElementById('sigma').value   = '0.20';
+  document.getElementById('T').value       = '1.00';
+  document.getElementById('M').value       = '10000';
+  document.getElementById('N').value       = '252';
+  document.getElementById('rUnit').textContent     = '5 %';
+  document.getElementById('sigmaUnit').textContent = '20 %';
+  document.getElementById('MUnit').textContent     = '10 000';
+  document.getElementById('NUnit').textContent     = '252';
+  toast('Paramètres réinitialisés aux valeurs par défaut.');
+}
+
+/* ─── Unit display helper ───────────────────── */
+function updateUnit(inputId, unitId, formatter) {
+  const val = parseFloat(document.getElementById(inputId).value);
+  if (!isNaN(val)) document.getElementById(unitId).textContent = formatter(val);
+}
+
+
+
+/* ─── Export CSV ────────────────────────────── */
+function exportCSV() {
+  if (!lastResults) { toast('⚠ Calculez d\'abord les résultats !'); return; }
+  const { bs, mc, em, ml, errMC, errEM, errML, tBS, tMC, tEM, tML, p } = lastResults;
+  const rows = [
+    ['Méthode', 'Prix', 'Erreur absolue vs B-S', 'Erreur relative (%)', 'Temps (s)'],
+    ['Black-Scholes',    bs.price.toFixed(6), '0',                          '0',                   tBS.toFixed(6)],
+    ['Monte-Carlo',      mc.price.toFixed(6), (mc.price-bs.price).toFixed(6), errMC.toFixed(4),    tMC.toFixed(6)],
+    ['Euler-Maruyama',   em.price.toFixed(6), (em.price-bs.price).toFixed(6), errEM.toFixed(4),    tEM.toFixed(6)],
+    ['Machine Learning', ml.price.toFixed(6), (ml.price-bs.price).toFixed(6), errML.toFixed(4),    tML.toFixed(6)],
+    [],
+    ['Paramètres'],
+    ['Type', p.type],
+    ['S0',    p.S],
+    ['K',     p.K],
+    ['r',     p.r],
+    ['sigma', p.sig],
+    ['T',     p.T],
+    ['M',     p.M],
+    ['N',     p.N],
+    [],
+    ['d1',    bs.d1.toFixed(6)],
+    ['d2',    bs.d2.toFixed(6)],
+    ['Delta', bs.delta.toFixed(6)],
+    ['Gamma', bs.gamma.toFixed(8)],
+    ['IC 95% bas',  mc.ci95[0].toFixed(6)],
+    ['IC 95% haut', mc.ci95[1].toFixed(6)],
+  ];
+  const csv = rows.map(r => r.join(',')).join('\n');
+  download('option_pricing_results.csv', csv, 'text/csv;charset=utf-8;');
+  toast('✅ Fichier CSV téléchargé.');
+}
+
+/* ─── Export Excel (CSV with BOM for Excel) ── */
+function exportExcel() {
+  if (!lastResults) { toast('⚠ Calculez d\'abord les résultats !'); return; }
+  const { bs, mc, em, ml, errMC, errEM, errML, p } = lastResults;
+  const sep = ';'; /* Excel FR separator */
+  const rows = [
+    ['Option Pricing Lab — Résultats'],
+    [],
+    ['Méthode', 'Prix', 'Erreur abs.', 'Erreur rel. (%)', 'Statut'],
+    ['Black-Scholes',    fmt(bs.price), '0', '0', 'Référence'],
+    ['Monte-Carlo',      fmt(mc.price), fmt(mc.price-bs.price), fmtPct(errMC), ''],
+    ['Euler-Maruyama',   fmt(em.price), fmt(em.price-bs.price), fmtPct(errEM), ''],
+    ['Machine Learning', fmt(ml.price), fmt(ml.price-bs.price), fmtPct(errML), ''],
+    [],
+    ['Paramètres', 'Valeur'],
+    ['Type d\'option', p.type], ['S0', p.S], ['K', p.K], ['r', p.r],
+    ['Sigma', p.sig], ['T', p.T], ['M', p.M], ['N', p.N],
+    [], ['d1', bs.d1.toFixed(4)], ['d2', bs.d2.toFixed(4)],
+    ['Delta', bs.delta.toFixed(4)], ['Gamma', bs.gamma.toFixed(6)],
+  ];
+  const csv = '\uFEFF' + rows.map(r => r.join(sep)).join('\n');
+  download('option_pricing_results.xlsx.csv', csv, 'text/csv;charset=utf-8;');
+  toast('✅ Fichier Excel (CSV) téléchargé.');
+}
+
+/* ─── Export PDF (print dialog) ─────────────── */
+function exportPDF() {
+  if (!lastResults) { toast('⚠ Calculez d\'abord les résultats !'); return; }
+  toast('⇩ Ouverture du dialogue d\'impression pour export PDF…');
+  setTimeout(() => window.print(), 600);
+}
+
+/* ─── Save scenario ─────────────────────────── */
+function saveScenario() {
+  if (!lastResults) { toast('⚠ Calculez d\'abord les résultats !'); return; }
+  try {
+    const key = 'opl_scenarios';
+    const existing = JSON.parse(localStorage.getItem(key) || '[]');
+    existing.push({
+      date   : new Date().toISOString(),
+      params : lastResults.p,
+      results: {
+        bs   : lastResults.bs.price,
+        mc   : lastResults.mc.price,
+        em   : lastResults.em.price,
+        ml   : lastResults.ml.price,
+        best : lastResults.best.n,
+        bestErr : lastResults.best.e
+      }
+    });
+    localStorage.setItem(key, JSON.stringify(existing));
+    toast(`✅ Scénario #${existing.length} sauvegardé dans l'historique local.`);
+  } catch(e) {
+    toast('⚠ Impossible de sauvegarder (localStorage non disponible).');
+  }
+}
+
+/* ─── Download helper ───────────────────────── */
+function download(filename, content, mime) {
+  const blob = new Blob([content], { type: mime });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/* ─── Init ──────────────────────────────────── */
+computeAll();
+</script>
+{% endblock %}

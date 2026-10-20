@@ -1,0 +1,804 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+:root{
+      --sb-bg:linear-gradient(170deg,#071c34 0%,#03111f 100%);
+      --sb-hover:#1a3a5c;--sb-border:rgba(255,255,255,.08);--sb-muted:#64748b;--sb-sub:#93c5fd;
+      --acc:#2563eb;--acc-light:#eff6ff;
+      --bg:#f0f4fa;--card:#ffffff;--border:#dbe3ef;
+      --txt:#0f172a;--muted:#64748b;--muted2:#94a3b8;
+      --green:#16a34a;--green-bg:#f0fdf4;--green-bdr:#bbf7d0;
+      --orange:#f97316;--purple:#7c3aed;--cyan:#0891b2;--red:#dc2626;
+      --amber:#d97706;--amber-bg:#fffbeb;--amber-bdr:#fde68a;
+      --indigo:#4f46e5;--indigo-bg:#eef2ff;--indigo-bdr:#c7d2fe;
+      --font:'DM Sans',sans-serif;--mono:'JetBrains Mono',monospace;
+      --r-sm:8px;--r-md:12px;--r-lg:14px;
+    }
+
+
+    /* Breadcrumb */
+    .breadcrumb{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);margin-bottom:18px}
+
+    .breadcrumb a{color:var(--acc);text-decoration:none}
+
+    .breadcrumb a:hover{text-decoration:underline}
+
+
+    /* Panel */
+    .panel{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:20px}
+
+    .panel-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+
+    .panel-hdr h3{font-size:15px;font-weight:700}
+
+
+    /* Form */
+    .form-group{margin-bottom:12px}
+
+    .form-group label{display:block;font-size:11px;font-weight:500;color:var(--muted);margin-bottom:4px}
+
+    .form-group select,.form-group input[type=number],.form-group input[type=text]{width:100%;padding:9px 10px;border:1px solid var(--border);border-radius:var(--r-sm);font-size:13px;font-family:var(--font);color:var(--txt);background:#fff;outline:none;transition:border-color .15s,box-shadow .15s;-moz-appearance:textfield}
+
+    .form-group input[type=number]::-webkit-outer-spin-button,.form-group input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
+
+    .form-group select:focus,.form-group input:focus{border-color:var(--indigo);box-shadow:0 0 0 3px rgba(79,70,229,.1)}
+
+    .form-group textarea{width:100%;padding:9px 10px;border:1px solid var(--border);border-radius:var(--r-sm);font-size:12px;font-family:var(--mono);color:var(--txt);background:#fff;outline:none;resize:vertical;transition:border-color .15s}
+
+    .form-group textarea:focus{border-color:var(--indigo)}
+
+    .input-wrap{position:relative}
+
+    .input-wrap input{padding-right:42px}
+
+    .input-unit{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--muted);pointer-events:none;font-weight:500}
+
+
+    /* Export card grid */
+    .export-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:22px}
+
+    .export-card{background:var(--card);border:1.5px solid var(--border);border-radius:var(--r-lg);padding:22px;transition:border-color .2s,box-shadow .2s,transform .15s;cursor:default}
+
+    .export-card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.07)}
+
+    .export-card-icon{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:14px}
+
+    .export-card-title{font-size:15px;font-weight:700;margin-bottom:4px}
+
+    .export-card-sub{font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.5}
+
+    .export-card-features{list-style:none;margin-bottom:18px}
+
+    .export-card-features li{font-size:11px;color:#475569;padding:3px 0;display:flex;align-items:baseline;gap:6px}
+
+    .export-card-features li::before{content:'✓';font-weight:700;flex-shrink:0}
+
+    .export-btn{width:100%;padding:11px;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);transition:filter .15s,transform .1s;display:flex;align-items:center;justify-content:center;gap:8px}
+
+    .export-btn:hover{filter:brightness(1.08)}
+
+    .export-btn:active{transform:scale(.97)}
+
+    .export-btn:disabled{opacity:.6;cursor:not-allowed}
+
+
+    /* Scenario builder */
+    .scenario-form-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+
+    .quick-calc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+
+    .result-mini{background:#f8fafc;border-radius:var(--r-md);padding:12px;border:1px solid var(--border);text-align:center}
+
+    .result-mini-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:4px}
+
+    .result-mini-val{font-size:20px;font-weight:700;font-family:var(--mono)}
+
+
+    /* Preview panel */
+    .preview-box{background:#0f172a;border-radius:var(--r-lg);padding:18px;font-family:var(--mono);font-size:11px;color:#94a3b8;line-height:2;max-height:280px;overflow-y:auto;margin-bottom:14px}
+
+    .preview-box .h{color:#60a5fa;font-weight:600}
+
+    .preview-box .v{color:#4ade80}
+
+    .preview-box .k{color:#f472b6}
+
+    .preview-box .c{color:#fbbf24}
+
+    .preview-box .sep{color:#334155}
+
+
+    /* Progress bar */
+    .prog-wrap{background:#f1f5f9;border-radius:8px;height:10px;overflow:hidden;margin-bottom:6px}
+
+    .prog-fill{height:10px;border-radius:8px;transition:width .4s cubic-bezier(.4,0,.2,1)}
+
+
+    /* Status badge */
+    .status-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600}
+
+    .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+
+
+    /* Charts */
+    .charts-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+
+    .chart-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px}
+
+    .chart-card h4{font-size:13px;font-weight:700;margin-bottom:12px}
+
+    .chart-wrap{position:relative}
+
+
+    /* Report preview */
+    .report-preview{background:#fff;border:1px solid var(--border);border-radius:var(--r-lg);padding:28px;font-family:var(--font);max-height:520px;overflow-y:auto}
+
+    .rep-title{font-size:22px;font-weight:700;margin-bottom:4px;color:var(--acc)}
+
+    .rep-sub{font-size:12px;color:var(--muted);margin-bottom:18px;padding-bottom:14px;border-bottom:2px solid var(--border)}
+
+    .rep-section{margin-bottom:20px}
+
+    .rep-section h3{font-size:14px;font-weight:700;margin-bottom:10px;padding:6px 10px;background:var(--indigo-bg);border-left:3px solid var(--indigo);border-radius:0 6px 6px 0;color:var(--indigo)}
+
+    .rep-table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:8px}
+
+    .rep-table th{padding:7px 12px;background:#f8fafc;border:1px solid var(--border);font-weight:600;text-align:left;font-size:11px;color:var(--muted)}
+
+    .rep-table td{padding:7px 12px;border:1px solid var(--border);font-family:var(--mono)}
+
+    .rep-conc{background:var(--green-bg);border:1px solid var(--green-bdr);border-radius:var(--r-md);padding:12px 14px;font-size:12px;color:#166534;line-height:1.8}
+
+    .watermark{text-align:center;font-size:10px;color:var(--muted2);margin-top:24px;padding-top:14px;border-top:1px solid var(--border)}
+
+
+    /* Toast */
+    .toast{position:fixed;bottom:24px;right:24px;background:#0f172a;color:#fff;padding:12px 18px;border-radius:10px;font-size:13px;font-weight:500;box-shadow:0 8px 24px rgba(0,0,0,.25);z-index:9999;opacity:0;transform:translateY(8px);transition:opacity .25s,transform .25s;pointer-events:none}
+
+    .toast.show{opacity:1;transform:translateY(0)}
+
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    .spin{display:inline-block;animation:spin .7s linear infinite}
+
+    .page-footer{font-size:10px;color:var(--muted2);text-align:center;padding:14px 0 4px;font-style:italic}
+
+
+    @media print{
+      .sidebar,.topbar,.topbar-right,.export-grid,.filters-bar,.tb-btn,.export-btn{display:none!important}
+      .report-preview{max-height:none;border:none;padding:0}
+      .content{padding:0}
+    }
+</style>
+
+<div class="breadcrumb">
+      <a href="{{ url_for('dashboard') }}">⌂ Tableau de bord</a>
+      <span>›</span>
+      <span style="color:var(--indigo);font-weight:500">⇩ Export & Rapports</span>
+    </div>
+
+    <!-- Scenario builder -->
+    <div class="panel" style="margin-bottom:22px">
+      <div class="panel-hdr">
+        <h3>⚙ Paramètres du scénario à exporter</h3>
+        <button class="export-btn" style="width:auto;padding:8px 18px;background:var(--indigo);color:#fff" onclick="computeAndPreview()">▷ Calculer & Prévisualiser</button>
+      </div>
+      <div class="scenario-form-grid">
+        <div class="form-group">
+          <label>Type d'option</label>
+          <select id="optType"><option value="call">Call européen</option><option value="put">Put européen</option></select>
+        </div>
+        <div class="form-group">
+          <label>Prix initial S₀</label>
+          <input type="number" id="S0" value="100" min="1" step="1">
+        </div>
+        <div class="form-group">
+          <label>Prix d'exercice K</label>
+          <input type="number" id="K" value="100" min="1" step="1">
+        </div>
+        <div class="form-group">
+          <label>Taux sans risque r</label>
+          <div class="input-wrap">
+            <input type="number" id="r" value="0.05" min="0" max="1" step="0.005"
+                   oninput="this.nextElementSibling.textContent=Math.round(this.value*100)+'%'">
+            <span class="input-unit">5 %</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Volatilité σ</label>
+          <div class="input-wrap">
+            <input type="number" id="sigma" value="0.20" min="0.01" max="3" step="0.01"
+                   oninput="this.nextElementSibling.textContent=Math.round(this.value*100)+'%'">
+            <span class="input-unit">20 %</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Maturité T (années)</label>
+          <input type="number" id="T" value="1.00" min="0.01" step="0.25">
+        </div>
+        <div class="form-group">
+          <label>Simulations M</label>
+          <input type="number" id="M" value="10000" min="500" max="100000" step="500">
+        </div>
+        <div class="form-group">
+          <label>Pas N (Euler)</label>
+          <input type="number" id="N" value="252" min="1" max="2000" step="1">
+        </div>
+      </div>
+      <!-- Quick results -->
+      <div class="quick-calc-grid" id="quickResults">
+        <div class="result-mini"><div class="result-mini-label">Black-Scholes</div><div class="result-mini-val" id="qr-bs" style="color:var(--acc)">—</div></div>
+        <div class="result-mini"><div class="result-mini-label">Monte-Carlo</div><div class="result-mini-val" id="qr-mc" style="color:var(--green)">—</div></div>
+        <div class="result-mini"><div class="result-mini-label">Euler-Maruyama</div><div class="result-mini-val" id="qr-em" style="color:var(--orange)">—</div></div>
+        <div class="result-mini"><div class="result-mini-label">Machine Learning</div><div class="result-mini-val" id="qr-ml" style="color:var(--purple)">—</div></div>
+      </div>
+      <div class="form-group">
+        <label>Note / commentaire pour le rapport (optionnel)</label>
+        <textarea id="reportNote" rows="2" placeholder="Ex : Option ATM sur CAC 40, volatilité implicite au 24/05/2024, paramètre r = OAT 10 ans…"></textarea>
+      </div>
+    </div>
+
+    <!-- Export cards -->
+    <div class="export-grid">
+
+      <!-- CSV -->
+      <div class="export-card" style="border-color:var(--green-bdr)">
+        <div class="export-card-icon" style="background:var(--green-bg)">▤</div>
+        <div class="export-card-title" style="color:var(--green)">Export CSV</div>
+        <div class="export-card-sub">Données brutes séparées par virgule, compatibles Excel, Python, R.</div>
+        <ul class="export-card-features">
+          <li style="--chk:var(--green)">Paramètres + résultats des 4 méthodes</li>
+          <li>Grecques (Δ, Γ, Θ, ν, ρ)</li>
+          <li>Intervalle de confiance Monte-Carlo</li>
+          <li>Erreurs relatives et absolues</li>
+          <li>Compatible pandas, Excel, R</li>
+        </ul>
+        <button class="export-btn" style="background:var(--green);color:#fff" id="csvBtn" onclick="exportCSV()">
+          ▤ Télécharger le CSV
+        </button>
+      </div>
+
+      <!-- Excel / TSV -->
+      <div class="export-card" style="border-color:var(--green-bdr)">
+        <div class="export-card-icon" style="background:#f0fdf4">▥</div>
+        <div class="export-card-title" style="color:#15803d">Export Excel (CSV formaté)</div>
+        <div class="export-card-sub">Fichier CSV avec BOM UTF-8 et séparateur point-virgule, optimisé pour Excel FR.</div>
+        <ul class="export-card-features">
+          <li>Séparateur ; (standard Excel FR)</li>
+          <li>BOM UTF-8 pour les accents</li>
+          <li>Sections séparées par thème</li>
+          <li>Tableau de sensibilité inclus</li>
+          <li>Prêt à ouvrir dans Excel</li>
+        </ul>
+        <button class="export-btn" style="background:#15803d;color:#fff" id="xlsBtn" onclick="exportExcel()">
+          ▥ Télécharger Excel CSV
+        </button>
+      </div>
+
+      <!-- JSON -->
+      <div class="export-card" style="border-color:var(--indigo-bdr)">
+        <div class="export-card-icon" style="background:var(--indigo-bg)">{ }</div>
+        <div class="export-card-title" style="color:var(--indigo)">Export JSON</div>
+        <div class="export-card-sub">Format structuré idéal pour l'intégration dans une API Flask ou un notebook Python.</div>
+        <ul class="export-card-features">
+          <li>Structure imbriquée params / results</li>
+          <li>Toutes les métriques numériques</li>
+          <li>Prêt à charger avec json.load()</li>
+          <li>Compatible API REST Flask</li>
+          <li>Horodatage ISO 8601</li>
+        </ul>
+        <button class="export-btn" style="background:var(--indigo);color:#fff" id="jsonBtn" onclick="exportJSON()">
+          { } Télécharger le JSON
+        </button>
+      </div>
+
+      <!-- Markdown -->
+      <div class="export-card" style="border-color:var(--amber-bdr)">
+        <div class="export-card-icon" style="background:var(--amber-bg)">✎</div>
+        <div class="export-card-title" style="color:var(--amber)">Export Markdown</div>
+        <div class="export-card-sub">Rapport texte formaté pour GitHub, Notion, Jupyter Notebook ou rapport LaTeX.</div>
+        <ul class="export-card-features">
+          <li>Tableaux Markdown GFM</li>
+          <li>Formules entre backticks</li>
+          <li>Sections structurées h2/h3</li>
+          <li>Compatible Jupyter, Notion</li>
+          <li>Facile à copier-coller</li>
+        </ul>
+        <button class="export-btn" style="background:var(--amber);color:#fff" id="mdBtn" onclick="exportMarkdown()">
+          ✎ Télécharger le Markdown
+        </button>
+      </div>
+
+      <!-- PDF via print -->
+      <div class="export-card" style="border-color:#fee2e2">
+        <div class="export-card-icon" style="background:#fef2f2">▤</div>
+        <div class="export-card-title" style="color:var(--red)">Rapport PDF</div>
+        <div class="export-card-sub">Rapport complet mis en page pour impression ou dépôt de projet.</div>
+        <ul class="export-card-features">
+          <li>Rapport professionnel complet</li>
+          <li>Résultats des 4 méthodes</li>
+          <li>Tableau comparatif</li>
+          <li>Interprétation automatique</li>
+          <li>Via dialogue d'impression</li>
+        </ul>
+        <button class="export-btn" style="background:var(--red);color:#fff" id="pdfBtn" onclick="exportPDF()">
+          ▤ Générer le rapport PDF
+        </button>
+      </div>
+
+      <!-- Save scenario -->
+      <div class="export-card" style="border-color:#a5f3fc">
+        <div class="export-card-icon" style="background:#ecfeff">▣</div>
+        <div class="export-card-title" style="color:var(--cyan)">Sauvegarder scénario</div>
+        <div class="export-card-sub">Enregistre ce scénario dans l'historique local pour y revenir plus tard.</div>
+        <ul class="export-card-features">
+          <li>Stockage dans le navigateur (localStorage)</li>
+          <li>Accessible depuis la page Historique</li>
+          <li>Persiste entre les sessions</li>
+          <li>Exportable depuis l'historique</li>
+          <li>Note personnalisée incluse</li>
+        </ul>
+        <button class="export-btn" style="background:var(--cyan);color:#fff" id="saveBtn" onclick="saveScenario()">
+          ▣ Sauvegarder le scénario
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Charts -->
+    <div class="charts-2">
+      <div class="chart-card">
+        <h4>Résumé visuel — prix des 4 méthodes</h4>
+        <div class="chart-wrap" style="height:200px">
+          <canvas id="chartPrices" role="img" aria-label="Prix calculé par chaque méthode de pricing">—</canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <h4>Erreur relative (%) vs Black-Scholes</h4>
+        <div class="chart-wrap" style="height:200px">
+          <canvas id="chartErrors" role="img" aria-label="Erreurs relatives des méthodes par rapport à Black-Scholes">—</canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Report preview -->
+    <div class="panel" style="margin-bottom:22px">
+      <div class="panel-hdr">
+        <h3>▤ Prévisualisation du rapport PDF</h3>
+        <div style="display:flex;gap:8px">
+          <span class="status-badge" id="reportStatus" style="background:#f1f5f9;color:var(--muted)">
+            <span class="dot" style="background:var(--muted)"></span> Non calculé
+          </span>
+          <button class="tb-btn" onclick="exportPDF()" style="border-color:var(--red);color:var(--red)">🖨 Imprimer / PDF</button>
+        </div>
+      </div>
+      <div class="report-preview" id="reportPreview">
+        <div style="color:var(--muted);text-align:center;padding:40px;font-size:13px">
+          Cliquez sur <b>▷ Calculer & Prévisualiser</b> pour générer le rapport.
+        </div>
+      </div>
+    </div>
+
+    <!-- JSON preview -->
+    <div class="panel" style="margin-bottom:22px">
+      <div class="panel-hdr">
+        <h3>{ } Prévisualisation JSON</h3>
+        <button class="tb-btn" onclick="copyJSON()" style="border-color:var(--indigo);color:var(--indigo)">▤ Copier</button>
+      </div>
+      <div class="preview-box" id="jsonPreview">
+        <span style="color:#475569">▷ Calculez les paramètres pour afficher le JSON.</span>
+      </div>
+    </div>
+
+    <div class="page-footer">
+      Option Pricing Lab — Export Centre · CSV · Excel · JSON · Markdown · PDF · Sauvegarde locale
+    </div>
+
+<div class="toast" id="toastEl"></div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+/* ── Math ── */
+function normCDF(x){ return OPL.normCDF(x); }
+function normPDF(x){return Math.exp(-0.5*x*x)/Math.sqrt(2*Math.PI);}
+function randn(){return Math.sqrt(-2*Math.log(Math.random()))*Math.cos(2*Math.PI*Math.random());}
+
+function bsm(S,K,r,sig,T,type){
+  const sqrtT=Math.sqrt(T);
+  const d1=(Math.log(S/K)+(r+0.5*sig*sig)*T)/(sig*sqrtT);
+  const d2=d1-sig*sqrtT;
+  const df=Math.exp(-r*T);
+  const price=type==='call'?S*normCDF(d1)-K*df*normCDF(d2):K*df*normCDF(-d2)-S*normCDF(-d1);
+  const delta=type==='call'?normCDF(d1):normCDF(d1)-1;
+  const gamma=normPDF(d1)/(S*sig*sqrtT);
+  const theta_c=(-S*normPDF(d1)*sig/(2*sqrtT)-r*K*df*normCDF(d2))/365;
+  const theta_p=(-S*normPDF(d1)*sig/(2*sqrtT)+r*K*df*normCDF(-d2))/365;
+  const theta=type==='call'?theta_c:theta_p;
+  const vega=S*normPDF(d1)*sqrtT*0.01;
+  const rho=type==='call'?K*T*df*normCDF(d2)*0.01:-K*T*df*normCDF(-d2)*0.01;
+  return{price,d1,d2,delta,gamma,theta,vega,rho};
+}
+
+function monteCarlo(S,K,r,sig,T,M,type){
+  const sqrtT=Math.sqrt(T),df=Math.exp(-r*T),drift=(r-0.5*sig*sig)*T;
+  let sum=0,sum2=0;const cap=Math.min(M,8000);
+  for(let i=0;i<cap;i++){
+    const ST=S*Math.exp(drift+sig*sqrtT*randn());
+    const pf=type==='call'?Math.max(ST-K,0):Math.max(K-ST,0);
+    sum+=pf;sum2+=pf*pf;
+  }
+  const mean=sum/cap,std=Math.sqrt(sum2/cap-mean*mean),se=std/Math.sqrt(cap);
+  const price=mean*df;
+  return{price,ci95:[price-1.96*se*df,price+1.96*se*df],std:std*df};
+}
+
+function eulerMaruyama(S,K,r,sig,T,M,N,type){
+  const dt=T/N,sqrtDt=Math.sqrt(dt),df=Math.exp(-r*T);
+  let sum=0;const cap=Math.min(M,4000);
+  for(let i=0;i<cap;i++){
+    let St=S;
+    for(let j=0;j<N;j++) St=Math.max(0,St+r*St*dt+sig*St*sqrtDt*randn());
+    sum+=(type==='call'?Math.max(St-K,0):Math.max(K-St,0));
+  }
+  return{price:(sum/cap)*df};
+}
+
+/* Prédiction du vrai modèle scikit-learn entraîné côté serveur (voir static/js/pricing_core.js). */
+
+/* ── State ── */
+let lastRes=null;let charts={};
+
+function P(){
+  return{
+    type:document.getElementById('optType').value,
+    S:parseFloat(document.getElementById('S0').value)||100,
+    K:parseFloat(document.getElementById('K').value)||100,
+    r:parseFloat(document.getElementById('r').value)||0.05,
+    sig:parseFloat(document.getElementById('sigma').value)||0.20,
+    T:parseFloat(document.getElementById('T').value)||1,
+    M:parseInt(document.getElementById('M').value)||10000,
+    N:parseInt(document.getElementById('N').value)||252,
+    note:document.getElementById('reportNote').value
+  };
+}
+function fmt(v,d){d=d!=null?d:4;return v==null?'—':v.toFixed(d);}
+
+/* ── Compute ── */
+async function computeAndPreview(){
+  const p=P();
+  const t0=performance.now();
+  const bs=bsm(p.S,p.K,p.r,p.sig,p.T,p.type);
+  const tBS=(performance.now()-t0)/1000;
+  const t1=performance.now();
+  const mc=monteCarlo(p.S,p.K,p.r,p.sig,p.T,p.M,p.type);
+  const tMC=(performance.now()-t1)/1000;
+  const t2=performance.now();
+  const em=eulerMaruyama(p.S,p.K,p.r,p.sig,p.T,p.M,p.N,p.type);
+  const tEM=(performance.now()-t2)/1000;
+  let ml,tML;
+  try{
+    const mlRes=await OPL.mlPredictMany([{S:p.S,K:p.K,r:p.r,sigma:p.sig,T:p.T,option_type:p.type}]);
+    ml={price:mlRes.prices[0]}; tML=mlRes.elapsed_s;
+  }catch(e){ toast('⚠ Modèle ML indisponible : '+e.message); return; }
+
+  const safe=bs.price>1e-6?bs.price:1e-6;
+  const errMC=Math.abs(mc.price-bs.price)/safe*100;
+  const errEM=Math.abs(em.price-bs.price)/safe*100;
+  const errML=Math.abs(ml.price-bs.price)/safe*100;
+  const best=[{n:'Monte-Carlo',e:errMC},{n:'Euler-Maruyama',e:errEM},{n:'Machine Learning',e:errML}].sort((a,b)=>a.e-b.e)[0];
+
+  lastRes={bs,mc,em,ml,tBS,tMC,tEM,tML,errMC,errEM,errML,best,p,timestamp:new Date().toISOString()};
+
+  /* Quick results */
+  document.getElementById('qr-bs').textContent=fmt(bs.price);
+  document.getElementById('qr-mc').textContent=fmt(mc.price);
+  document.getElementById('qr-em').textContent=fmt(em.price);
+  document.getElementById('qr-ml').textContent=fmt(ml.price);
+
+  buildCharts(bs.price,mc.price,em.price,ml.price,errMC,errEM,errML);
+  buildReportPreview(lastRes);
+  buildJSONPreview(lastRes);
+
+  document.getElementById('reportStatus').innerHTML=
+    `<span class="dot" style="background:var(--green)"></span> <span style="color:var(--green)">Prêt — ${new Date().toLocaleTimeString('fr-FR')}</span>`;
+
+  toast('✓ Calcul terminé — rapport prêt à exporter.');
+}
+
+/* ── Charts ── */
+const GRID='#f1f5f9';
+function mkChart(id,type,data,opts){
+  const el=document.getElementById(id);
+  if(charts[id]) charts[id].destroy();
+  charts[id]=new Chart(el,{type,data,options:{responsive:true,maintainAspectRatio:false,animation:{duration:500},...opts}});
+}
+function buildCharts(bsP,mcP,emP,mlP,errMC,errEM,errML){
+  const colors=['rgba(37,99,235,.75)','rgba(22,163,74,.75)','rgba(249,115,22,.75)','rgba(124,58,237,.75)'];
+  const borders=['#2563eb','#16a34a','#f97316','#7c3aed'];
+  const prMin=Math.min(bsP,mcP,emP,mlP)*0.996;
+  mkChart('chartPrices','bar',
+    {labels:['Black-Scholes','Monte-Carlo','Euler-Maruyama','Machine Learning'],
+     datasets:[{data:[bsP,mcP,emP,mlP],backgroundColor:colors,borderColor:borders,borderWidth:1.5,borderRadius:6,borderSkipped:false}]},
+    {plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' Prix : '+c.raw.toFixed(4)}}},
+     scales:{y:{min:prMin,ticks:{callback:v=>v.toFixed(2),font:{size:9}},grid:{color:GRID}},
+             x:{ticks:{font:{size:9}},grid:{display:false}}}});
+  mkChart('chartErrors','bar',
+    {labels:['Monte-Carlo','Euler-Maruyama','Machine Learning'],
+     datasets:[{data:[errMC,errEM,errML],backgroundColor:['rgba(22,163,74,.7)','rgba(249,115,22,.7)','rgba(124,58,237,.7)'],borderColor:['#16a34a','#f97316','#7c3aed'],borderWidth:1.5,borderRadius:6,borderSkipped:false}]},
+    {plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.raw.toFixed(3)+'%'}}},
+     scales:{y:{ticks:{callback:v=>v.toFixed(2)+'%',font:{size:9}},grid:{color:GRID}},
+             x:{ticks:{font:{size:9}},grid:{display:false}}}});
+}
+
+/* ── Report preview ── */
+function buildReportPreview(res){
+  const p=res.p;
+  const now=new Date();
+  const safe=res.bs.price>1e-6?res.bs.price:1e-6;
+  const moneyness=p.S>p.K?'Dans la monnaie (ITM)':p.S<p.K?'Hors de la monnaie (OTM)':'À la monnaie (ATM)';
+  const html=`
+  <div class="rep-title">Option Pricing Lab — Rapport de valorisation</div>
+  <div class="rep-sub">
+    Généré le ${now.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})} à ${now.toLocaleTimeString('fr-FR')} &nbsp;·&nbsp;
+    ${p.type.toUpperCase()} européen &nbsp;·&nbsp; S₀=${p.S} · K=${p.K} · r=${(p.r*100).toFixed(2)}% · σ=${(p.sig*100).toFixed(1)}% · T=${p.T.toFixed(2)}a
+    ${p.note?`<br><em style="color:var(--muted)">${p.note}</em>`:''}
+  </div>
+
+  <div class="rep-section">
+    <h3>1. Paramètres de l'option</h3>
+    <table class="rep-table">
+      <tr><th>Paramètre</th><th>Symbole</th><th>Valeur</th><th>Description</th></tr>
+      <tr><td>Type</td><td>—</td><td>${p.type.toUpperCase()}</td><td>Option d'${p.type==='call'?'achat':'vente'} européenne</td></tr>
+      <tr><td>Prix initial</td><td>S₀</td><td>${p.S}</td><td>Prix du sous-jacent aujourd'hui</td></tr>
+      <tr><td>Strike</td><td>K</td><td>${p.K}</td><td>Prix d'exercice à maturité</td></tr>
+      <tr><td>Taux sans risque</td><td>r</td><td>${(p.r*100).toFixed(2)} %</td><td>Taux d'actualisation continu</td></tr>
+      <tr><td>Volatilité</td><td>σ</td><td>${(p.sig*100).toFixed(1)} %</td><td>Volatilité annualisée du sous-jacent</td></tr>
+      <tr><td>Maturité</td><td>T</td><td>${p.T.toFixed(2)} an(s)</td><td>Durée jusqu'à l'échéance</td></tr>
+      <tr><td>Moneyness</td><td>—</td><td>${moneyness}</td><td>S₀/K = ${(p.S/p.K).toFixed(4)}</td></tr>
+    </table>
+  </div>
+
+  <div class="rep-section">
+    <h3>2. Résultats de pricing — comparaison des 4 méthodes</h3>
+    <table class="rep-table">
+      <tr><th>Méthode</th><th>Prix</th><th>Erreur absolue</th><th>Erreur relative</th><th>Temps de calcul</th><th>Remarque</th></tr>
+      <tr><td><b>Black-Scholes</b></td><td><b>${fmt(res.bs.price)}</b></td><td>0.0000</td><td>0.000 %</td><td>${res.tBS.toFixed(4)} s</td><td>Référence analytique exacte</td></tr>
+      <tr><td>Monte-Carlo (M=${p.M.toLocaleString('fr-FR')})</td><td>${fmt(res.mc.price)}</td><td>${fmt(Math.abs(res.mc.price-res.bs.price))}</td><td>${res.errMC.toFixed(3)} %</td><td>${res.tMC.toFixed(4)} s</td><td>IC 95% [${fmt(res.mc.ci95[0],3)} ; ${fmt(res.mc.ci95[1],3)}]</td></tr>
+      <tr><td>Euler-Maruyama (N=${p.N})</td><td>${fmt(res.em.price)}</td><td>${fmt(Math.abs(res.em.price-res.bs.price))}</td><td>${res.errEM.toFixed(3)} %</td><td>${res.tEM.toFixed(4)} s</td><td>Biais O(1/N), Δt=${(p.T/p.N).toFixed(5)}</td></tr>
+      <tr><td>Machine Learning (RF)</td><td>${fmt(res.ml.price)}</td><td>${fmt(Math.abs(res.ml.price-res.bs.price))}</td><td>${res.errML.toFixed(3)} %</td><td>${res.tML.toFixed(4)} s</td><td>Surrogate model Random Forest</td></tr>
+    </table>
+  </div>
+
+  <div class="rep-section">
+    <h3>3. Lettres grecques (Black-Scholes)</h3>
+    <table class="rep-table">
+      <tr><th>Grecque</th><th>Symbole</th><th>Valeur</th><th>Interprétation</th></tr>
+      <tr><td>Delta</td><td>Δ</td><td>${fmt(res.bs.delta)}</td><td>+1 € sur S₀ → ${fmt(Math.abs(res.bs.delta),4)} € sur le prix</td></tr>
+      <tr><td>Gamma</td><td>Γ</td><td>${fmt(res.bs.gamma,6)}</td><td>Convexité du Delta par rapport à S₀</td></tr>
+      <tr><td>Thêta</td><td>Θ</td><td>${fmt(res.bs.theta,4)}</td><td>Perte de valeur par jour calendaire</td></tr>
+      <tr><td>Véga</td><td>ν</td><td>${fmt(res.bs.vega,4)}</td><td>+1 % de σ → +${fmt(res.bs.vega,4)} € sur le prix</td></tr>
+      <tr><td>Rhô</td><td>ρ</td><td>${fmt(res.bs.rho,4)}</td><td>+1 % de r → ${fmt(res.bs.rho,4)} € sur le prix</td></tr>
+    </table>
+  </div>
+
+  <div class="rep-section">
+    <h3>4. Interprétation et conclusion</h3>
+    <div class="rep-conc">
+      <b>Meilleure méthode (hors référence) :</b> ${res.best.n} — erreur relative = ${res.best.e.toFixed(4)} %<br>
+      <b>Moneyness :</b> L'option ${p.type.toUpperCase()} est <b>${moneyness}</b> avec un ratio S₀/K = ${(p.S/p.K).toFixed(4)}.<br>
+      <b>Delta = ${fmt(res.bs.delta)} :</b> L'option réplique ${(Math.abs(res.bs.delta)*100).toFixed(1)} % d'une position en sous-jacent.<br>
+      <b>Thêta = ${fmt(res.bs.theta)} :</b> L'option perd ${Math.abs(res.bs.theta).toFixed(4)} € par jour (time decay).<br>
+      <b>Monte-Carlo :</b> L'estimateur converge vers BS avec une erreur de ${res.errMC.toFixed(3)} % pour M=${p.M.toLocaleString('fr-FR')} simulations.<br>
+      <b>Euler-Maruyama :</b> Le biais de discrétisation est de ${res.errEM.toFixed(3)} % pour N=${p.N} pas (Δt=${(p.T/p.N).toFixed(5)}).
+    </div>
+  </div>
+
+  <div class="watermark">
+    Option Pricing Lab — Projet Calcul Stochastique et Machine Learning · © 2024
+    <br>Black-Scholes-Merton (1973) · Monte-Carlo · Schéma d'Euler-Maruyama · Surrogate Model (Random Forest)
+  </div>`;
+  document.getElementById('reportPreview').innerHTML=html;
+}
+
+/* ── JSON preview ── */
+function buildJSONPreview(res){
+  const p=res.p;
+  const obj={
+    meta:{generated:res.timestamp,application:'Option Pricing Lab',version:'1.0'},
+    parametres:{type:p.type,S0:p.S,K:p.K,r:p.r,sigma:p.sig,T:p.T,M:p.M,N:p.N},
+    resultats:{
+      black_scholes:{prix:+res.bs.price.toFixed(6),d1:+res.bs.d1.toFixed(6),d2:+res.bs.d2.toFixed(6),temps_s:+res.tBS.toFixed(6)},
+      monte_carlo:{prix:+res.mc.price.toFixed(6),ic95_bas:+res.mc.ci95[0].toFixed(6),ic95_haut:+res.mc.ci95[1].toFixed(6),erreur_rel_pct:+res.errMC.toFixed(4),temps_s:+res.tMC.toFixed(6)},
+      euler_maruyama:{prix:+res.em.price.toFixed(6),biais:+(res.em.price-res.bs.price).toFixed(6),erreur_rel_pct:+res.errEM.toFixed(4),delta_t:+(p.T/p.N).toFixed(8),temps_s:+res.tEM.toFixed(6)},
+      machine_learning:{prix:+res.ml.price.toFixed(6),modele:'Random Forest',erreur_rel_pct:+res.errML.toFixed(4),temps_s:+res.tML.toFixed(6)}
+    },
+    grecques:{delta:+res.bs.delta.toFixed(6),gamma:+res.bs.gamma.toFixed(8),theta_par_jour:+res.bs.theta.toFixed(6),vega_par_pct:+res.bs.vega.toFixed(6),rho_par_pct:+res.bs.rho.toFixed(6)},
+    verdict:{meilleure_methode:res.best.n,erreur_relative_pct:+res.best.e.toFixed(4)}
+  };
+  const lines=JSON.stringify(obj,null,2).split('\n');
+  document.getElementById('jsonPreview').innerHTML=lines.map(l=>{
+    if(l.includes('"')&&l.includes(':'))
+      return l.replace(/("[\w_]+")(\s*:)/g,'<span class="k">$1</span>$2')
+               .replace(/:\s*(".*")/g,': <span class="v">$1</span>')
+               .replace(/:\s*(\d[\d.e+-]*)/g,': <span class="v">$1</span>');
+    if(l.includes('{')) return `<span class="sep">${l}</span>`;
+    return l;
+  }).join('\n');
+}
+
+/* ── Downloads ── */
+function download(name,content,mime){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([content],{type:mime}));
+  a.download=name; a.click();
+}
+
+function exportCSV(){
+  if(!lastRes){toast('! Calculez d\'abord les résultats !');return;}
+  const r=lastRes,p=r.p;
+  const rows=[
+    ['Option Pricing Lab — Résultats CSV'],['Date',new Date().toLocaleString('fr-FR')],
+    [],['Paramètres'],['Type',p.type],['S0',p.S],['K',p.K],['r',p.r],['sigma',p.sig],['T',p.T],['M',p.M],['N',p.N],
+    [],['Résultats'],['Méthode','Prix','Erreur abs.','Erreur rel. (%)','Temps (s)'],
+    ['Black-Scholes',fmt(r.bs.price),'0','0',r.tBS.toFixed(6)],
+    ['Monte-Carlo',fmt(r.mc.price),fmt(Math.abs(r.mc.price-r.bs.price),6),r.errMC.toFixed(4),r.tMC.toFixed(6)],
+    ['Euler-Maruyama',fmt(r.em.price),fmt(Math.abs(r.em.price-r.bs.price),6),r.errEM.toFixed(4),r.tEM.toFixed(6)],
+    ['Machine Learning',fmt(r.ml.price),fmt(Math.abs(r.ml.price-r.bs.price),6),r.errML.toFixed(4),r.tML.toFixed(6)],
+    [],['Grecques (Black-Scholes)'],
+    ['Delta',r.bs.delta.toFixed(6)],['Gamma',r.bs.gamma.toFixed(8)],
+    ['Theta/jour',r.bs.theta.toFixed(6)],['Vega +1%',r.bs.vega.toFixed(6)],['Rho +1%',r.bs.rho.toFixed(6)],
+    [],['IC Monte-Carlo 95%'],['Bas',r.mc.ci95[0].toFixed(6)],['Haut',r.mc.ci95[1].toFixed(6)],
+  ].map(r=>r.join(',')).join('\n');
+  download('option_pricing_results.csv',rows,'text/csv;charset=utf-8;');
+  toast('✓ CSV téléchargé.');
+}
+
+function exportExcel(){
+  if(!lastRes){toast('! Calculez d\'abord les résultats !');return;}
+  const r=lastRes,p=r.p,s=';';
+  const rows=[
+    ['\uFEFFOption Pricing Lab — Résultats'],['Date',new Date().toLocaleString('fr-FR')],
+    [],['PARAMÈTRES'],['Type',p.type],['S0',p.S],['K',p.K],['r',p.r],['sigma',p.sig],['T',p.T],['M',p.M],['N',p.N],
+    [],['RÉSULTATS'],['Méthode','Prix','Erreur absolue','Erreur relative (%)','Temps (s)'],
+    ['Black-Scholes',fmt(r.bs.price),'0,000000','0,0000',r.tBS.toFixed(6)],
+    ['Monte-Carlo',fmt(r.mc.price),fmt(Math.abs(r.mc.price-r.bs.price),6),r.errMC.toFixed(4),r.tMC.toFixed(6)],
+    ['Euler-Maruyama',fmt(r.em.price),fmt(Math.abs(r.em.price-r.bs.price),6),r.errEM.toFixed(4),r.tEM.toFixed(6)],
+    ['Machine Learning',fmt(r.ml.price),fmt(Math.abs(r.ml.price-r.bs.price),6),r.errML.toFixed(4),r.tML.toFixed(6)],
+    [],['GRECQUES'],
+    ['Delta',r.bs.delta.toFixed(6),'Sensibilité à S₀'],
+    ['Gamma',r.bs.gamma.toFixed(8),'Convexité du delta'],
+    ['Theta/jour',r.bs.theta.toFixed(6),'Time decay'],
+    ['Vega (+1% sigma)',r.bs.vega.toFixed(6),'Sensibilité à la volatilité'],
+    ['Rho (+1% r)',r.bs.rho.toFixed(6),'Sensibilité au taux'],
+    [],['Verdict','Meilleure méthode',r.best.n,'Erreur',r.best.e.toFixed(4)+'%'],
+  ].map(r=>r.join(s)).join('\n');
+  download('option_pricing_excel.csv',rows,'text/csv;charset=utf-8;');
+  toast('✓ Fichier Excel CSV téléchargé (ouvrez avec Excel).');
+}
+
+function exportJSON(){
+  if(!lastRes){toast('! Calculez d\'abord les résultats !');return;}
+  const r=lastRes,p=r.p;
+  const obj={
+    meta:{generated:r.timestamp,app:'Option Pricing Lab',version:'1.0'},
+    params:{type:p.type,S0:p.S,K:p.K,r:p.r,sigma:p.sig,T:p.T,M:p.M,N:p.N,note:p.note},
+    results:{
+      black_scholes:{price:+r.bs.price.toFixed(6),d1:+r.bs.d1.toFixed(6),d2:+r.bs.d2.toFixed(6),time_s:+r.tBS.toFixed(6)},
+      monte_carlo:{price:+r.mc.price.toFixed(6),ci95:[+r.mc.ci95[0].toFixed(6),+r.mc.ci95[1].toFixed(6)],err_rel_pct:+r.errMC.toFixed(4),time_s:+r.tMC.toFixed(6)},
+      euler_maruyama:{price:+r.em.price.toFixed(6),bias:+(r.em.price-r.bs.price).toFixed(6),err_rel_pct:+r.errEM.toFixed(4),delta_t:+(p.T/p.N).toFixed(8),time_s:+r.tEM.toFixed(6)},
+      machine_learning:{price:+r.ml.price.toFixed(6),model:'RandomForest',err_rel_pct:+r.errML.toFixed(4),time_s:+r.tML.toFixed(6)}
+    },
+    greeks:{delta:+r.bs.delta.toFixed(6),gamma:+r.bs.gamma.toFixed(8),theta_per_day:+r.bs.theta.toFixed(6),vega_per_pct:+r.bs.vega.toFixed(6),rho_per_pct:+r.bs.rho.toFixed(6)},
+    verdict:{best_method:r.best.n,err_rel_pct:+r.best.e.toFixed(4)}
+  };
+  download('option_pricing_results.json',JSON.stringify(obj,null,2),'application/json');
+  toast('✓ JSON téléchargé.');
+}
+
+function exportMarkdown(){
+  if(!lastRes){toast('! Calculez d\'abord les résultats !');return;}
+  const r=lastRes,p=r.p;
+  const now=new Date().toLocaleString('fr-FR');
+  const md=`# Option Pricing Lab — Rapport de valorisation
+
+> Généré le ${now} · ${p.type.toUpperCase()} européen
+
+## 1. Paramètres
+
+| Paramètre | Valeur |
+|-----------|--------|
+| Type | ${p.type.toUpperCase()} |
+| S₀ | ${p.S} |
+| K | ${p.K} |
+| r | ${(p.r*100).toFixed(2)} % |
+| σ | ${(p.sig*100).toFixed(1)} % |
+| T | ${p.T.toFixed(2)} an(s) |
+| M | ${p.M.toLocaleString('fr-FR')} |
+| N | ${p.N} |
+
+## 2. Résultats de pricing
+
+| Méthode | Prix | Erreur abs. | Erreur rel. (%) | Temps (s) |
+|---------|------|-------------|-----------------|-----------|
+| **Black-Scholes** | **${fmt(r.bs.price)}** | 0.0000 | 0.000 % | ${r.tBS.toFixed(4)} |
+| Monte-Carlo | ${fmt(r.mc.price)} | ${fmt(Math.abs(r.mc.price-r.bs.price))} | ${r.errMC.toFixed(3)} % | ${r.tMC.toFixed(4)} |
+| Euler-Maruyama | ${fmt(r.em.price)} | ${fmt(Math.abs(r.em.price-r.bs.price))} | ${r.errEM.toFixed(3)} % | ${r.tEM.toFixed(4)} |
+| Machine Learning | ${fmt(r.ml.price)} | ${fmt(Math.abs(r.ml.price-r.bs.price))} | ${r.errML.toFixed(3)} % | ${r.tML.toFixed(4)} |
+
+## 3. Lettres grecques (Black-Scholes)
+
+| Grecque | Symbole | Valeur |
+|---------|---------|--------|
+| Delta | Δ | ${fmt(r.bs.delta)} |
+| Gamma | Γ | ${fmt(r.bs.gamma,6)} |
+| Thêta/jour | Θ | ${fmt(r.bs.theta)} |
+| Véga (+1%) | ν | ${fmt(r.bs.vega)} |
+| Rhô (+1%) | ρ | ${fmt(r.bs.rho)} |
+
+## 4. Intervalle de confiance (Monte-Carlo 95 %)
+
+\`\`\`
+IC 95% = [ ${fmt(r.mc.ci95[0])} ; ${fmt(r.mc.ci95[1])} ]
+Largeur = ${fmt(r.mc.ci95[1]-r.mc.ci95[0])}
+\`\`\`
+
+## 5. Verdict
+
+**Meilleure méthode (hors référence) :** ${r.best.n} — erreur relative = **${r.best.e.toFixed(4)} %**
+
+${p.note?`> Note : ${p.note}`:''}
+
+---
+*Option Pricing Lab © 2024 — Black-Scholes · Monte-Carlo · Euler-Maruyama · Machine Learning*
+`;
+  download('option_pricing_report.md',md,'text/markdown');
+  toast('✓ Markdown téléchargé.');
+}
+
+async function exportPDF(){
+  if(!lastRes) await computeAndPreview();
+  setTimeout(()=>{
+    toast('🖨 Ouverture du dialogue d\'impression PDF…');
+    setTimeout(()=>window.print(),400);
+  },200);
+}
+
+function copyJSON(){
+  if(!lastRes){toast('! Calculez d\'abord les résultats !');return;}
+  const el=document.getElementById('jsonPreview');
+  navigator.clipboard.writeText(el.innerText).then(()=>toast('▤ JSON copié dans le presse-papier.')).catch(()=>toast('! Copie non supportée — sélectionnez manuellement.'));
+}
+
+function saveScenario(){
+  if(!lastRes){toast('! Calculez d\'abord les résultats !');return;}
+  const r=lastRes,p=r.p;
+  try{
+    const key='opl_scenarios';
+    const existing=JSON.parse(localStorage.getItem(key)||'[]');
+    existing.push({
+      id:Date.now(),
+      date:r.timestamp,
+      params:{type:p.type,S:p.S,K:p.K,r:p.r,sig:p.sig,T:p.T},
+      results:{bs:+r.bs.price.toFixed(6),mc:+r.mc.price.toFixed(6),em:+r.em.price.toFixed(6),ml:+r.ml.price.toFixed(6),best:r.best.n,bestErr:+r.best.e.toFixed(4)},
+      note:p.note
+    });
+    localStorage.setItem(key,JSON.stringify(existing));
+    toast(`✓ Scénario #${existing.length} sauvegardé dans l'historique.`);
+  }catch{toast('! Impossible d\'accéder au localStorage.');}
+}
+
+/* ── Toast ── */
+let toastTimer=null;
+function toast(msg){
+  const el=document.getElementById('toastEl');
+  el.textContent=msg; el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>el.classList.remove('show'),3400);
+}
+
+/* ── Init ── */
+computeAndPreview();
+</script>
+{% endblock %}

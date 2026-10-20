@@ -1,0 +1,84 @@
+<aside class="sidebar">
+  <div class="sb-logo">
+    <div class="sb-logo-row">
+      <div class="sb-app-icon">↗</div>
+      <div class="sb-title">Option Pricing Lab</div>
+    </div>
+    <div class="sb-subtitle">Valorisation des options européennes</div>
+  </div>
+
+  <div class="sb-section">Navigation</div>
+
+  <nav class="sb-nav">
+    <a class="sb-link {{ 'active' if active == 'dashboard' or request.endpoint == 'dashboard' else '' }}"
+       href="{{ url_for('dashboard') }}">
+      <span class="sb-ic">⌂</span>
+      <span>Tableau de bord</span>
+    </a>
+  </nav>
+
+  <div class="sb-section">Méthodes de pricing</div>
+
+  <nav class="sb-nav">
+    <a class="sb-link {{ 'active' if active == 'black' or request.endpoint == 'black_scholes_page' else '' }}"
+       href="{{ url_for('black_scholes_page') }}">
+      <span class="sb-ic">Σ</span>
+      <span>Black-Scholes</span>
+      <span class="sb-badge">BS</span>
+    </a>
+
+    <a class="sb-link {{ 'active' if active == 'mc' or request.endpoint == 'monte_carlo_page' else '' }}"
+       href="{{ url_for('monte_carlo_page') }}">
+      <span class="sb-ic">◈</span>
+      <span>Monte-Carlo</span>
+    </a>
+
+    <a class="sb-link {{ 'active' if active == 'euler' or request.endpoint == 'euler_maruyama_page' else '' }}"
+       href="{{ url_for('euler_maruyama_page') }}">
+      <span class="sb-ic">⌁</span>
+      <span>Euler-Maruyama</span>
+    </a>
+
+    <a class="sb-link {{ 'active' if active == 'ml' or request.endpoint == 'machine_learning_page' else '' }}"
+       href="{{ url_for('machine_learning_page') }}">
+      <span class="sb-ic">◉</span>
+      <span>Machine Learning</span>
+    </a>
+
+    <a class="sb-link {{ 'active' if active == 'comparison' or request.endpoint == 'comparaison_page' else '' }}"
+       href="{{ url_for('comparaison_page') }}">
+      <span class="sb-ic">▥</span>
+      <span>Comparaison</span>
+    </a>
+
+    <a class="sb-link {{ 'active' if active == 'sensitivity' or request.endpoint == 'sensibilite_page' else '' }}"
+       href="{{ url_for('sensibilite_page') }}">
+      <span class="sb-ic">≋</span>
+      <span>Analyse de sensibilité</span>
+    </a>
+
+    <a class="sb-link {{ 'active' if active == 'history' or request.endpoint == 'historique_page' else '' }}"
+       href="{{ url_for('historique_page') }}">
+      <span class="sb-ic">▤</span>
+      <span>Historique</span>
+    </a>
+
+    <a class="sb-link {{ 'active' if active == 'export' or request.endpoint == 'export_page' else '' }}"
+       href="{{ url_for('export_page') }}">
+      <span class="sb-ic">⇩</span>
+      <span>Export</span>
+    </a>
+  </nav>
+
+  <div class="dark-toggle" onclick="toggleDark()">
+    <span>◐ Mode sombre</span>
+    <div class="toggle-pill" id="darkPill"></div>
+  </div>
+
+  <div class="sb-footer">
+    <div class="sb-footer-title">Option Pricing Lab</div>
+    <div class="sb-footer-sub">
+      © 2026 · Projet de calcul stochastique et Machine Learning
+    </div>
+  </div>
+</aside>

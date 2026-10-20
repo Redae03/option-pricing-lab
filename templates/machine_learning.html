@@ -1,0 +1,644 @@
+
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="page-actions" style="display:flex;justify-content:flex-end;gap:10px;margin-bottom:16px">
+  <button class="tb-btn" onclick="exportCSV()">⇩ Exporter CSV</button>
+  <button class="tb-btn primary" id="trainBtn" onclick="fullPipeline()">▷ Pipeline complet</button>
+</div>
+
+  <style>
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --sb-bg:linear-gradient(170deg,#071c34 0%,#03111f 100%);
+      --sb-hover:#1a3a5c;--sb-border:rgba(255,255,255,.08);--sb-muted:#64748b;--sb-sub:#93c5fd;
+      --acc:#2563eb;--acc-light:#eff6ff;
+      --bg:#f0f4fa;--card:#ffffff;--border:#dbe3ef;
+      --txt:#0f172a;--muted:#64748b;--muted2:#94a3b8;
+      --green:#16a34a;--green-bg:#f0fdf4;--green-bdr:#bbf7d0;
+      --orange:#f97316;--purple:#7c3aed;--purple-bg:#faf5ff;--purple-bdr:#ddd6fe;
+      --cyan:#0891b2;--red:#dc2626;
+      --font:'DM Sans',sans-serif;--mono:'JetBrains Mono',monospace;
+      --r-sm:8px;--r-md:12px;--r-lg:14px;
+    }
+    html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--txt);font-size:14px;line-height:1.5}
+    .layout{display:flex;min-height:100vh}
+
+
+    /* Breadcrumb */
+    .breadcrumb{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);margin-bottom:18px}
+    .breadcrumb a{color:var(--acc);text-decoration:none}
+    .breadcrumb a:hover{text-decoration:underline}
+
+    /* Panel */
+    .panel{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:20px}
+    .panel-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+    .panel-hdr h3{font-size:15px;font-weight:700}
+
+    /* Steps / pipeline */
+    .pipeline{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-bottom:22px;background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden}
+    .pipe-step{padding:16px 14px;text-align:center;position:relative;border-right:1px solid var(--border)}
+    .pipe-step:last-child{border-right:none}
+    .pipe-step.done{background:var(--purple-bg)}
+    .pipe-step.active{background:linear-gradient(135deg,#f5f3ff,#ede9fe)}
+    .pipe-num{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;margin:0 auto 8px;border:2px solid var(--border)}
+    .pipe-step.done .pipe-num{background:var(--purple);color:#fff;border-color:var(--purple)}
+    .pipe-step.active .pipe-num{background:var(--purple-bg);color:var(--purple);border-color:var(--purple)}
+    .pipe-title{font-size:12px;font-weight:700;margin-bottom:3px}
+    .pipe-sub{font-size:10px;color:var(--muted)}
+
+    /* Formula */
+    .formula-box{background:var(--purple-bg);border:1px solid var(--purple-bdr);border-radius:var(--r-md);padding:16px 20px;margin-bottom:20px}
+    .formula-box h4{font-size:12px;font-weight:700;color:var(--purple);margin-bottom:10px;letter-spacing:.3px}
+    .formula-line{font-family:var(--mono);font-size:13px;color:#4c1d95;margin-bottom:6px;padding:6px 10px;background:rgba(255,255,255,.8);border-radius:6px}
+    .formula-note{font-size:11px;color:var(--muted);margin-top:10px;line-height:1.7}
+
+    /* Form */
+    .form-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:16px}
+    .form-grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px}
+    .form-group label{display:block;font-size:11px;font-weight:500;color:var(--muted);margin-bottom:4px}
+    .form-group select,.form-group input[type=number],.form-group input[type=range]{width:100%;padding:9px 10px;border:1px solid var(--border);border-radius:var(--r-sm);font-size:13px;font-family:var(--font);color:var(--txt);background:#fff;outline:none;transition:border-color .15s,box-shadow .15s;-moz-appearance:textfield}
+    .form-group input[type=number]::-webkit-outer-spin-button,.form-group input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
+    .form-group select:focus,.form-group input:focus{border-color:var(--purple);box-shadow:0 0 0 3px rgba(124,58,237,.12)}
+    .input-wrap{position:relative}
+    .input-wrap input{padding-right:46px}
+    .input-unit{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--muted);font-weight:500;pointer-events:none}
+    .action-btn{padding:10px 20px;border:none;border-radius:var(--r-sm);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);transition:filter .15s,transform .1s;display:flex;align-items:center;gap:8px}
+    .action-btn:hover{filter:brightness(1.08)}
+    .action-btn:active{transform:scale(.97)}
+    .action-btn:disabled{opacity:.55;cursor:not-allowed;filter:none}
+    .btn-purple{background:var(--purple);color:#fff}
+    .btn-green{background:var(--green);color:#fff}
+    .btn-cyan{background:var(--cyan);color:#fff}
+
+    /* Hero */
+    .result-hero{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:20px}
+    .hero-card{border-radius:var(--r-md);padding:16px;border:1.5px solid var(--border);text-align:center}
+    .hero-label{font-size:10px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+    .hero-value{font-size:22px;font-weight:700;font-family:var(--mono);letter-spacing:-1px;margin-bottom:3px}
+    .hero-sub{font-size:10.5px;color:var(--muted);line-height:1.4}
+
+    /* Charts */
+    .charts-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+    .charts-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px}
+    .chart-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px}
+    .chart-card h4{font-size:13px;font-weight:700;margin-bottom:12px}
+    .chart-wrap{position:relative}
+
+    /* Progress bar */
+    .prg-wrap{background:#f1f5f9;border-radius:6px;height:16px;overflow:hidden;margin:6px 0;position:relative}
+    .prg-fill{height:16px;border-radius:6px;transition:width .7s cubic-bezier(.4,0,.2,1);display:flex;align-items:center;padding-left:8px;font-size:10px;font-weight:600;color:#fff;white-space:nowrap}
+
+    /* Stat grid */
+    .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .stat-row{display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#f8fafc;border-radius:8px;font-size:12px}
+    .stat-label{color:var(--muted);font-size:11px}
+    .stat-val{font-family:var(--mono);font-weight:600}
+
+    /* Training log */
+    .train-log{background:#0f172a;border-radius:var(--r-md);padding:14px 16px;font-family:var(--mono);font-size:11px;color:#94a3b8;line-height:2;max-height:160px;overflow-y:auto}
+    .train-log .ok{color:#4ade80}
+    .train-log .info{color:#60a5fa}
+    .train-log .warn{color:#fbbf24}
+
+    /* Prediction box */
+    .pred-box{background:linear-gradient(135deg,var(--purple-bg),#ede9fe);border:1.5px solid var(--purple-bdr);border-radius:var(--r-lg);padding:20px;text-align:center}
+    .pred-price{font-size:42px;font-weight:700;font-family:var(--mono);color:var(--purple);letter-spacing:-2px;margin:8px 0}
+    .pred-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--muted)}
+
+    /* Feature importance */
+    .feat-bar{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:12px}
+    .feat-name{width:50px;text-align:right;color:var(--muted);font-size:11px;font-weight:500}
+    .feat-track{flex:1;background:#f1f5f9;border-radius:4px;height:14px;overflow:hidden}
+    .feat-fill{height:14px;border-radius:4px;background:var(--purple);transition:width .8s cubic-bezier(.4,0,.2,1)}
+    .feat-pct{width:36px;text-align:right;font-family:var(--mono);font-size:11px;font-weight:600;color:var(--purple)}
+
+    /* Badge */
+    .badge{display:inline-block;padding:2px 8px;border-radius:5px;font-size:10px;font-weight:600;font-family:var(--font)}
+
+    /* Toast */
+    .toast{position:fixed;bottom:24px;right:24px;background:#0f172a;color:#fff;padding:12px 18px;border-radius:10px;font-size:13px;font-weight:500;box-shadow:0 8px 24px rgba(0,0,0,.25);z-index:9999;opacity:0;transform:translateY(8px);transition:opacity .25s,transform .25s;pointer-events:none}
+    .toast.show{opacity:1;transform:translateY(0)}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .spin{display:inline-block;animation:spin .7s linear infinite}
+    .page-footer{font-size:10px;color:var(--muted2);text-align:center;padding:14px 0 4px;font-style:italic}
+    
+    .page-actions .tb-btn:hover {
+      border-color: var(--purple);
+      color: var(--purple);
+    }
+
+    .page-actions .tb-btn.primary {
+      background: var(--purple);
+      color: #fff;
+      border-color: var(--purple);
+    }
+
+    .page-actions .tb-btn.primary:hover {
+      background: #6d28d9;
+    }
+  </style>
+
+
+
+
+    <div class="breadcrumb">
+      <a href="{{ url_for('dashboard') }}">⌂ Tableau de bord</a>
+      <span>›</span>
+      <span style="color:var(--purple);font-weight:500">◉ Machine Learning</span>
+    </div>
+
+    <!-- Pipeline steps -->
+    <div class="pipeline">
+      <div class="pipe-step" id="step1">
+        <div class="pipe-num">1</div>
+        <div class="pipe-title">Génération dataset</div>
+        <div class="pipe-sub">Échantillonnage des paramètres + label BS</div>
+      </div>
+      <div class="pipe-step" id="step2">
+        <div class="pipe-num">2</div>
+        <div class="pipe-title">Prétraitement</div>
+        <div class="pipe-sub">Normalisation, split train/test</div>
+      </div>
+      <div class="pipe-step" id="step3">
+        <div class="pipe-num">3</div>
+        <div class="pipe-title">Entraînement</div>
+        <div class="pipe-sub">Random Forest ou MLP (scikit-learn)</div>
+      </div>
+      <div class="pipe-step" id="step4">
+        <div class="pipe-num">4</div>
+        <div class="pipe-title">Prédiction</div>
+        <div class="pipe-sub">Inférence & évaluation</div>
+      </div>
+    </div>
+
+    <!-- Formula box -->
+    <div class="formula-box">
+      <h4>∑ SURROGATE MODEL — APPRENTISSAGE SUPERVISÉ DU PRICING</h4>
+      <div class="formula-line">X = (S₀, K, r, σ, T, type) → y = C_BS(S₀, K, r, σ, T)&nbsp;&nbsp;&nbsp;&nbsp;[dataset]</div>
+      <div class="formula-line">f̂ : X → ŷ = f̂(S₀, K, r, σ, T)&nbsp;&nbsp;&nbsp;&nbsp;[modèle appris : Random Forest ou MLP]</div>
+      <div class="formula-line">MAE = (1/n)·Σ|y_i − ŷ_i|&nbsp;&nbsp;&nbsp;&nbsp;RMSE = √[(1/n)·Σ(y_i − ŷ_i)²]&nbsp;&nbsp;&nbsp;&nbsp;R² = 1 − SS_res/SS_tot</div>
+      <div class="formula-note">
+        <b>Principe :</b> On génère un dataset artificiel de N options avec des paramètres aléatoires
+        (S₀, K, r, σ, T) et le prix exact Black-Scholes comme label. Un modèle supervisé apprend
+        la fonction de pricing. Une fois entraîné, la prédiction est quasi-instantanée : O(1).
+        C'est le concept de <b>surrogate model</b> en finance quantitative (Ludkovski, 2018).
+      </div>
+    </div>
+
+    <!-- Step 1 : Dataset generation -->
+    <div class="panel" style="margin-bottom:20px">
+      <div class="panel-hdr">
+        <h3>Étape 1 — Génération du dataset</h3>
+        <button class="action-btn btn-purple" id="genBtn" onclick="generateDataset()">◇ Générer</button>
+      </div>
+      <div class="form-grid-3">
+        <div class="form-group">
+          <label>Taille du dataset N</label>
+          <div class="input-wrap">
+            <input type="number" id="N_data" value="2000" min="100" max="20000" step="100"
+                   oninput="document.getElementById('Ndisp').textContent=parseInt(this.value).toLocaleString('fr-FR')">
+            <span class="input-unit" id="Ndisp" style="font-size:9px">2 000</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Type d'option à inclure</label>
+          <select id="dataType">
+            <option value="both">Call + Put</option>
+            <option value="call">Call uniquement</option>
+            <option value="put">Put uniquement</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Plage de σ (volatilité)</label>
+          <select id="sigRange">
+            <option value="narrow">Étroite (10–40%)</option>
+            <option value="wide" selected>Large (5–80%)</option>
+            <option value="extreme">Extrême (2–150%)</option>
+          </select>
+        </div>
+      </div>
+      <div style="background:#f8fafc;border-radius:8px;padding:10px 14px;font-size:11px;color:var(--muted);margin-top:4px">
+        Plages de génération : <b>S₀</b> ∈ [50, 200] · <b>K</b> ∈ [40, 220] · <b>r</b> ∈ [0%, 10%] · <b>T</b> ∈ [0.1, 3 ans]
+        · Labels = prix Black-Scholes exact
+      </div>
+      <div id="dataset-status" style="margin-top:12px;font-size:12px;color:var(--muted)">— Dataset non généré —</div>
+    </div>
+
+    <!-- Step 2-3 : Training -->
+    <div class="panel" style="margin-bottom:20px">
+      <div class="panel-hdr">
+        <h3>Étape 2-3 — Entraînement du modèle</h3>
+        <div style="display:flex;gap:8px">
+          <button class="action-btn btn-green" id="trainRFBtn" onclick="trainModel('rf')" disabled>RF Random Forest</button>
+          <button class="action-btn btn-cyan" id="trainMLPBtn" onclick="trainModel('mlp')" disabled>MLP Regressor</button>
+        </div>
+      </div>
+      <div class="form-grid-4" style="margin-bottom:14px">
+        <div class="form-group">
+          <label>Modèle actif</label>
+          <select id="modelChoice">
+            <option value="rf">Random Forest</option>
+            <option value="mlp">MLP (Réseau de neurones)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Ratio train/test</label>
+          <select id="trainRatio">
+            <option value="0.8" selected>80% / 20%</option>
+            <option value="0.7">70% / 30%</option>
+            <option value="0.9">90% / 10%</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Arbres (RF) / Couches (MLP)</label>
+          <input type="number" id="complexity" value="100" min="10" max="500" step="10">
+        </div>
+        <div class="form-group" style="display:flex;align-items:flex-end">
+          <button class="action-btn btn-purple" style="width:100%" id="trainMainBtn" onclick="trainModel(document.getElementById('modelChoice').value)" disabled>
+            ▷ Entraîner
+          </button>
+        </div>
+      </div>
+      <div class="train-log" id="trainLog">
+        <span class="info">[ Système prêt ]</span><br>
+        <span class="warn">→ Générez d'abord le dataset (Étape 1)</span>
+      </div>
+    </div>
+
+    <!-- Step 4 : Results -->
+    <div class="result-hero" id="metrics-section">
+      <div class="hero-card" style="background:var(--purple-bg);border-color:var(--purple-bdr)">
+        <div class="hero-label">MAE</div>
+        <div class="hero-value" style="color:var(--purple)" id="h-mae">—</div>
+        <div class="hero-sub">Erreur absolue moyenne</div>
+      </div>
+      <div class="hero-card" style="background:var(--green-bg);border-color:var(--green-bdr)">
+        <div class="hero-label">RMSE</div>
+        <div class="hero-value" style="color:var(--green)" id="h-rmse">—</div>
+        <div class="hero-sub">Racine erreur quadratique</div>
+      </div>
+      <div class="hero-card" style="background:var(--acc-light);border-color:#bfdbfe">
+        <div class="hero-label">R² Score</div>
+        <div class="hero-value" style="color:var(--acc)" id="h-r2">—</div>
+        <div class="hero-sub">Coefficient de détermination</div>
+      </div>
+      <div class="hero-card" style="background:#fef9c3;border-color:#fde68a">
+        <div class="hero-label">Temps entraînement</div>
+        <div class="hero-value" style="color:#ca8a04;font-size:18px" id="h-ttime">—</div>
+        <div class="hero-sub">Dataset complet</div>
+      </div>
+      <div class="hero-card" style="background:#ecfeff;border-color:#a5f3fc">
+        <div class="hero-label">Modèle</div>
+        <div class="hero-value" style="color:var(--cyan);font-size:14px;padding-top:8px" id="h-model">—</div>
+        <div class="hero-sub" id="h-model-sub">— exemples entraînement</div>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="charts-3">
+      <div class="chart-card">
+        <h4>Prix réel vs prix prédit (test set)</h4>
+        <div class="chart-wrap" style="height:200px">
+          <canvas id="chartScatter" role="img" aria-label="Nuage de points — prix réel Black-Scholes vs prix prédit par le modèle ML">—</canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <h4>Distribution des résidus (y − ŷ)</h4>
+        <div class="chart-wrap" style="height:200px">
+          <canvas id="chartResiduals" role="img" aria-label="Histogramme de la distribution des résidus de prédiction">—</canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <h4>Importance des variables (features)</h4>
+        <div id="featImportance" style="padding:8px 0">
+          <div style="font-size:12px;color:var(--muted);text-align:center;padding:20px">
+            Entraînez le modèle pour afficher l'importance des variables.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Comparison and learning curve -->
+    <div class="charts-2">
+      <div class="chart-card">
+        <h4>Erreur absolue par plage de prix (test set)</h4>
+        <div class="chart-wrap" style="height:200px">
+          <canvas id="chartErrByPrice" role="img" aria-label="Erreur absolue moyenne par plage de prix de l'option">—</canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <h4>Courbe d'apprentissage — MAE vs taille du dataset</h4>
+        <div class="chart-wrap" style="height:200px">
+          <canvas id="chartLearning" role="img" aria-label="Courbe d'apprentissage montrant la MAE en fonction de la taille du dataset">—</canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Prediction panel -->
+    <div class="panel" style="margin-bottom:20px">
+      <div class="panel-hdr">
+        <h3>◉ Prédire le prix d'une nouvelle option</h3>
+        <button class="action-btn btn-purple" id="predBtn" onclick="predict()" disabled>▷ Prédire</button>
+      </div>
+      <div class="form-grid-4" style="margin-bottom:16px">
+        <div class="form-group">
+          <label>Type d'option</label>
+          <select id="p-type"><option value="call">Call</option><option value="put">Put</option></select>
+        </div>
+        <div class="form-group">
+          <label>S₀ (prix initial)</label>
+          <input type="number" id="p-S0" value="105" min="1" step="1">
+        </div>
+        <div class="form-group">
+          <label>K (strike)</label>
+          <input type="number" id="p-K" value="100" min="1" step="1">
+        </div>
+        <div class="form-group">
+          <label>r (taux sans risque)</label>
+          <div class="input-wrap">
+            <input type="number" id="p-r" value="0.05" min="0" max="1" step="0.005"
+                   oninput="this.nextElementSibling.textContent=Math.round(this.value*100)+'%'">
+            <span class="input-unit">5 %</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>σ (volatilité)</label>
+          <div class="input-wrap">
+            <input type="number" id="p-sigma" value="0.25" min="0.01" max="3" step="0.01"
+                   oninput="this.nextElementSibling.textContent=Math.round(this.value*100)+'%'">
+            <span class="input-unit">25 %</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>T (maturité, années)</label>
+          <input type="number" id="p-T" value="1.0" min="0.01" step="0.25">
+        </div>
+      </div>
+      <div class="charts-2" style="margin-bottom:0">
+        <div class="pred-box">
+          <div class="pred-label">Prix prédit par le modèle ML</div>
+          <div class="pred-price" id="pred-ml">—</div>
+          <div style="font-size:12px;color:var(--muted)" id="pred-model-name">— Entraînez d'abord le modèle —</div>
+        </div>
+        <div style="background:#f8fafc;border-radius:var(--r-lg);border:1px solid var(--border);padding:18px">
+          <div style="font-size:13px;font-weight:700;margin-bottom:14px">Comparaison avec Black-Scholes</div>
+          <div class="stat-grid">
+            <div class="stat-row"><span class="stat-label">Prix ML</span><span class="stat-val" id="cmp-ml">—</span></div>
+            <div class="stat-row"><span class="stat-label">Prix B-S exact</span><span class="stat-val" id="cmp-bs">—</span></div>
+            <div class="stat-row"><span class="stat-label">Erreur absolue</span><span class="stat-val" id="cmp-err">—</span></div>
+            <div class="stat-row"><span class="stat-label">Erreur relative</span><span class="stat-val" id="cmp-rel">—</span></div>
+            <div class="stat-row"><span class="stat-label">Temps prédiction</span><span class="stat-val" id="cmp-time">—</span></div>
+            <div class="stat-row"><span class="stat-label">Moneyness</span><span class="stat-val" id="cmp-money">—</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-footer">
+      Surrogate model — Apprentissage supervisé · Random Forest (Breiman, 2001) · MLP · Labels = Black-Scholes exact · Ludkovski (2018)
+    </div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+/* ════════════════════════════════════════════════════════════════
+   Machine Learning — pipeline réel
+   Le dataset, l'entraînement (scikit-learn) et les prédictions sont
+   exécutés côté serveur (Flask, routes /api/train-ml et /api/ml/predict).
+   Cette page se contente d'envoyer les paramètres et d'afficher les
+   résultats réellement obtenus.
+   ════════════════════════════════════════════════════════════════ */
+function normCDF(x){ return OPL.normCDF(x); }
+function bsPrice(S,K,r,sig,T,type){
+  if(sig*Math.sqrt(T)<1e-8) return type==='call'?Math.max(S-K*Math.exp(-r*T),0):Math.max(K*Math.exp(-r*T)-S,0);
+  const d1=(Math.log(S/K)+(r+0.5*sig*sig)*T)/(sig*Math.sqrt(T));
+  const d2=d1-sig*Math.sqrt(T);
+  if(type==='call') return S*normCDF(d1)-K*Math.exp(-r*T)*normCDF(d2);
+  return K*Math.exp(-r*T)*normCDF(-d2)-S*normCDF(-d1);
+}
+
+/* ── State ── */
+let trained=null, trainedOn=null, datasetReady=false;
+let charts={};
+const SIG_RANGES={narrow:[0.10,0.40],wide:[0.05,0.80],extreme:[0.02,1.50]};
+
+/* ── Étape 1 : configuration du dataset (généré côté serveur, échantillonnage LHS) ── */
+function generateDataset(){
+  const N=parseInt(document.getElementById('N_data').value)||2000;
+  const sig=SIG_RANGES[document.getElementById('sigRange').value];
+  datasetReady=true;
+  setStep(1);
+  document.getElementById('dataset-status').innerHTML=
+    `<span style="color:var(--green)">✓ Configuration enregistrée : <b>${N.toLocaleString('fr-FR')}</b> options, σ ∈ [${(sig[0]*100).toFixed(0)} %, ${(sig[1]*100).toFixed(0)} %]. `+
+    `Le dataset est généré côté serveur (hypercube latin) au lancement de l'entraînement, avec le prix Black-Scholes exact comme label.</span>`;
+  ['trainRFBtn','trainMLPBtn','trainMainBtn'].forEach(id=>document.getElementById(id).disabled=false);
+  log('info',`Configuration : ${N} options, σ ∈ [${sig[0]}, ${sig[1]}]`);
+  log('ok','→ Prêt pour l\'entraînement (Étape 2-3)');
+}
+
+/* ── Étapes 2-3 : entraînement réel ── */
+async function trainModel(type){
+  if(!datasetReady) generateDataset();
+  const btns=['trainRFBtn','trainMLPBtn','trainMainBtn','trainBtn'].map(id=>document.getElementById(id));
+  btns.forEach(b=>b.disabled=true);
+  const body={
+    model_type:type,
+    n_samples:parseInt(document.getElementById('N_data').value)||2000,
+    option_types:document.getElementById('dataType').value,
+    sigma_range:SIG_RANGES[document.getElementById('sigRange').value],
+    train_ratio:parseFloat(document.getElementById('trainRatio').value)||0.8,
+    complexity:parseInt(document.getElementById('complexity').value)||null,
+    learning_curve:true
+  };
+  log('info','─────────────────────────────');
+  log('info',`Entraînement côté serveur : ${type==='rf'?'Random Forest ('+body.complexity+' arbres)':'MLP ('+body.complexity+' neurones en 1re couche)'}`);
+  log('warn','→ Génération du dataset, entraînement et évaluation…');
+  setStep(2);
+  let res;
+  try{
+    const r=await fetch('/api/train-ml',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    res=await r.json();
+    if(!r.ok||res.error) throw new Error(res.error||'Erreur serveur');
+  }catch(e){
+    log('warn','Échec : '+e.message); toast('⚠ Entraînement impossible : '+e.message);
+    btns.forEach(b=>b.disabled=false); return;
+  }
+  trained=res; trainedOn=type;
+  setStep(4);
+  const ds=res.dataset_summary||{};
+  document.getElementById('dataset-status').innerHTML=
+    `<span style="color:var(--green)">✓ Dataset généré : <b>${(ds.n||0).toLocaleString('fr-FR')}</b> exemples · Call : <b>${ds.calls}</b> · Put : <b>${ds.puts}</b> · Prix moyen : <b>${(ds.mean_price||0).toFixed(4)}</b></span>`;
+  log('ok',`Train = ${res.n_train} · Test = ${res.n_test} · cible : ${res.target==='price_over_K'?'prix / K':'prix'}`);
+  log('ok',`MAE = ${res.mae.toFixed(4)} · RMSE = ${res.rmse.toFixed(4)} · R² = ${res.r2.toFixed(6)}`);
+  log('ok',`Terminé en ${res.training_time.toFixed(2)} s (génération + entraînement + évaluation)`);
+
+  document.getElementById('h-mae').textContent=res.mae.toFixed(4);
+  document.getElementById('h-rmse').textContent=res.rmse.toFixed(4);
+  document.getElementById('h-r2').textContent=res.r2.toFixed(6);
+  document.getElementById('h-ttime').textContent=res.training_time.toFixed(2)+'s';
+  document.getElementById('h-model').textContent=res.model_name;
+  document.getElementById('h-model-sub').textContent=res.n_train.toLocaleString('fr-FR')+' exemples train';
+
+  const preds=res.test_sample.y_true.map((y,i)=>({real:y,pred:res.test_sample.y_pred[i]}));
+  buildCharts(preds,res);
+  buildLearningCurve(res.learning_curve);
+  document.getElementById('predBtn').disabled=false;
+  btns.forEach(b=>b.disabled=false);
+  toast('✓ '+res.model_name+' entraîné — R² = '+res.r2.toFixed(4));
+}
+
+/* ── Charts ── */
+const GRID='#f1f5f9';
+function mkChart(id,type,data,opts){
+  const el=document.getElementById(id);
+  if(charts[id]) charts[id].destroy();
+  charts[id]=new Chart(el,{type,data,options:{responsive:true,maintainAspectRatio:false,animation:{duration:500},...opts}});
+}
+
+function buildCharts(preds,res){
+  /* Prix réel vs prédit */
+  const pts=preds.slice(0,300).map(p=>({x:p.real,y:p.pred}));
+  const maxV=Math.max(...preds.map(p=>Math.max(p.real,p.pred)));
+  mkChart('chartScatter','scatter',
+    {datasets:[
+      {label:'Prédictions (test)',data:pts,backgroundColor:'rgba(124,58,237,.5)',pointRadius:3},
+      {label:'Parfait (y=x)',data:[{x:0,y:0},{x:maxV,y:maxV}],type:'line',borderColor:'#2563eb',borderWidth:1.5,borderDash:[5,4],pointRadius:0,fill:false}
+    ]},
+    {plugins:{legend:{display:true,labels:{font:{size:9},boxWidth:8}}},
+     scales:{
+       x:{ticks:{font:{size:9},callback:v=>v.toFixed(1)},grid:{color:GRID},title:{display:true,text:'Prix réel (B-S)',font:{size:10}}},
+       y:{ticks:{font:{size:9},callback:v=>v.toFixed(1)},grid:{color:GRID},title:{display:true,text:'Prix prédit (ML)',font:{size:10}}}
+     }});
+
+  /* Résidus */
+  const residuals=res.test_sample.residuals;
+  const mn=Math.min(...residuals),mx=Math.max(...residuals);
+  const bins=30, w=(mx-mn)/bins||1;
+  const counts=Array(bins).fill(0), labels=[];
+  for(let i=0;i<bins;i++) labels.push((mn+i*w+w/2).toFixed(2));
+  residuals.forEach(v=>{const idx=Math.min(Math.floor((v-mn)/w),bins-1);counts[idx]++;});
+  mkChart('chartResiduals','bar',
+    {labels,datasets:[{data:counts,backgroundColor:'rgba(124,58,237,.5)',borderColor:'rgba(124,58,237,.8)',borderWidth:1,borderRadius:3}]},
+    {plugins:{legend:{display:false}},
+     scales:{x:{ticks:{maxTicksLimit:7,font:{size:9}},grid:{color:GRID},title:{display:true,text:'Résidu (ŷ − y)',font:{size:10}}},
+             y:{ticks:{font:{size:9}},grid:{color:GRID}}}});
+
+  /* Importance des variables : valeurs réelles du Random Forest (impureté moyenne) */
+  const fi=res.feature_importances;
+  const box=document.getElementById('featImportance');
+  if(!fi){
+    box.innerHTML='<div style="font-size:12px;color:var(--muted);text-align:center;padding:20px">Le MLP ne fournit pas d\'importance des variables native.</div>';
+  }else{
+    const features=Object.entries(fi).sort((a,b)=>b[1]-a[1]).slice(0,8);
+    const maxImp=features[0][1]||1;
+    box.innerHTML=features.map(([name,imp])=>`
+      <div class="feat-bar">
+        <div class="feat-name">${name}</div>
+        <div class="feat-track"><div class="feat-fill" style="width:${(imp/maxImp*100).toFixed(0)}%"></div></div>
+        <div class="feat-pct">${(imp*100).toFixed(1)}%</div>
+      </div>`).join('');
+  }
+
+  /* Erreur par plage de prix */
+  const bins2=5, sorted=[...preds].sort((a,b)=>a.real-b.real), chunk=Math.floor(sorted.length/bins2);
+  const rangeLabels=[],rangeMAE=[];
+  for(let i=0;i<bins2;i++){
+    const c=sorted.slice(i*chunk,(i+1)*chunk);
+    rangeLabels.push((c.reduce((a,b)=>a+b.real,0)/c.length).toFixed(1));
+    rangeMAE.push(c.reduce((a,b)=>a+Math.abs(b.real-b.pred),0)/c.length);
+  }
+  mkChart('chartErrByPrice','bar',
+    {labels:rangeLabels,datasets:[{label:'MAE',data:rangeMAE,backgroundColor:'rgba(124,58,237,.5)',borderColor:'rgba(124,58,237,.8)',borderWidth:1,borderRadius:5}]},
+    {plugins:{legend:{display:false}},
+     scales:{x:{ticks:{font:{size:9}},grid:{color:GRID},title:{display:true,text:'Prix moyen de l\'option',font:{size:10}}},
+             y:{ticks:{font:{size:9},callback:v=>v.toFixed(3)},grid:{color:GRID},title:{display:true,text:'MAE',font:{size:10}}}}});
+}
+
+function buildLearningCurve(curve){
+  if(!curve) return;
+  mkChart('chartLearning','line',
+    {labels:curve.sizes.map(s=>s.toLocaleString('fr-FR')),
+     datasets:[
+       {label:'Train MAE',data:curve.mae_train,borderColor:'#16a34a',borderWidth:2,pointRadius:4,tension:.3,fill:false},
+       {label:'Test MAE',data:curve.mae_test,borderColor:'#f97316',borderWidth:2,borderDash:[4,3],pointRadius:4,tension:.3,fill:false}
+     ]},
+    {plugins:{legend:{display:true,labels:{font:{size:9},boxWidth:8}}},
+     scales:{x:{ticks:{font:{size:9}},grid:{color:GRID},title:{display:true,text:'Taille de l\'échantillon d\'entraînement',font:{size:10}}},
+             y:{ticks:{font:{size:9},callback:v=>v.toFixed(3)},grid:{color:GRID},title:{display:true,text:'MAE',font:{size:10}}}}});
+}
+
+/* ── Étape 4 : prédiction ── */
+async function predict(){
+  if(!trained){toast('⚠ Entraînez d\'abord le modèle !');return;}
+  const d={
+    type:document.getElementById('p-type').value,
+    S:parseFloat(document.getElementById('p-S0').value)||105,
+    K:parseFloat(document.getElementById('p-K').value)||100,
+    r:parseFloat(document.getElementById('p-r').value)||0.05,
+    sig:parseFloat(document.getElementById('p-sigma').value)||0.25,
+    T:parseFloat(document.getElementById('p-T').value)||1
+  };
+  let res;
+  try{ res=await OPL.mlPredictMany([{S:d.S,K:d.K,r:d.r,sigma:d.sig,T:d.T,option_type:d.type}],trainedOn); }
+  catch(e){ toast('⚠ Prédiction impossible : '+e.message); return; }
+  const mlPred=res.prices[0];
+  const bsRef=bsPrice(d.S,d.K,d.r,d.sig,d.T,d.type);
+  const err=Math.abs(mlPred-bsRef), errRel=bsRef>0?err/bsRef*100:0;
+  const moneyness=d.S>d.K?'ITM (dans la monnaie)':d.S<d.K?'OTM (hors monnaie)':'ATM (à la monnaie)';
+  document.getElementById('pred-ml').textContent=mlPred.toFixed(4);
+  document.getElementById('pred-model-name').textContent='Modèle : '+res.model_name;
+  document.getElementById('cmp-ml').textContent=mlPred.toFixed(4);
+  document.getElementById('cmp-bs').textContent=bsRef.toFixed(4);
+  document.getElementById('cmp-err').textContent=err.toFixed(4);
+  document.getElementById('cmp-rel').textContent=errRel.toFixed(3)+'%';
+  document.getElementById('cmp-time').textContent=res.elapsed_s.toFixed(6)+'s';
+  document.getElementById('cmp-money').textContent=moneyness;
+  toast('◉ Prédiction : '+mlPred.toFixed(4)+' (BS='+bsRef.toFixed(4)+' · écart='+errRel.toFixed(2)+'%)');
+}
+
+/* ── Pipeline complet ── */
+async function fullPipeline(){
+  generateDataset();
+  await trainModel(document.getElementById('modelChoice').value);
+  await predict();
+}
+
+/* ── Steps UI ── */
+function setStep(n){
+  for(let i=1;i<=4;i++){
+    const el=document.getElementById('step'+i);
+    el.className='pipe-step'+(i<n?' done':i===n?' active':'');
+  }
+}
+
+/* ── Journal ── */
+function log(type,msg){
+  const el=document.getElementById('trainLog');
+  el.innerHTML+=`<span class="${type}">${type==='ok'?'✓ ':type==='warn'?'→ ':'  '}${msg}</span><br>`;
+  el.scrollTop=el.scrollHeight;
+}
+
+/* ── Export CSV (métriques et prédictions de test réelles) ── */
+function exportCSV(){
+  if(!trained){toast('! Entraînez d\'abord le modèle !');return;}
+  const t=trained;
+  const rows=[
+    ['Machine Learning — Résultats'],
+    ['Modèle','Train','Test','Cible','MAE','RMSE','R2'],
+    [t.model_name,t.n_train,t.n_test,t.target,t.mae.toFixed(6),t.rmse.toFixed(6),t.r2.toFixed(6)],
+    [],['Prédictions sur le jeu de test'],['Prix BS','Prix prédit','Résidu']
+  ].concat(t.test_sample.y_true.map((y,i)=>[y.toFixed(6),t.test_sample.y_pred[i].toFixed(6),(t.test_sample.y_pred[i]-y).toFixed(6)]));
+  const csv=rows.map(r=>r.join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='ml_results.csv'; a.click();
+  toast('✓ CSV téléchargé.');
+}
+
+/* ── Init ── */
+generateDataset();
+</script>
+{% endblock %}

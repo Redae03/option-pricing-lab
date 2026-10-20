@@ -1,0 +1,599 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="page-actions" style="display:flex;justify-content:flex-end;gap:10px;margin-bottom:16px">
+  <button class="tb-btn" onclick="exportCSV()">⇩ Exporter CSV</button>
+  <button class="tb-btn primary" id="runBtn" onclick="runSimulation()">▷ Simuler</button>
+</div>
+
+
+<style>
+    .formula-box {
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      border-radius: 14px;
+      padding: 18px;
+      margin-bottom: 20px;
+    }
+
+    .formula-box h4 {
+      font-size: 13px;
+      color: var(--orange);
+      margin-bottom: 12px;
+      letter-spacing: .2px;
+    }
+
+    .formula-line {
+      font-family: var(--mono);
+      font-size: 13px;
+      background: rgba(255,255,255,.75);
+      border-radius: 8px;
+      padding: 9px 11px;
+      margin-bottom: 8px;
+      color: #9a3412;
+      overflow-x: auto;
+    }
+  .formula-note,.info-box{font-size:12px;color:var(--muted);line-height:1.7;margin-top:10px}
+  .form-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:14px}
+  .input-wrap{position:relative}.input-unit{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--muted);font-weight:600}
+  .input-wrap input{padding-right:54px}.calc-btn{height:38px;border:0;border-radius:9px;background:var(--acc);color:white;font-weight:700;padding:0 16px;cursor:pointer}.calc-btn:hover{filter:brightness(.96)}.calc-btn:disabled{opacity:.65;cursor:not-allowed}
+  .result-hero{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:20px}.hero-card{border:1px solid var(--border);border-radius:14px;padding:16px;background:var(--card)}.hero-label{font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.4px}.hero-value{font-family:var(--mono);font-size:24px;font-weight:800;margin:7px 0}.hero-sub{font-size:11px;color:var(--muted)}
+  .charts-2{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}.charts-3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-bottom:20px}.chart-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:var(--shadow)}.chart-card h4{font-size:14px;margin-bottom:10px}.chart-wrap{position:relative}
+  .stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.stat-row{display:flex;justify-content:space-between;gap:10px;background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:10px}.stat-label{font-size:12px;color:var(--muted)}.stat-val{font-family:var(--mono);font-weight:700;color:var(--txt)}
+  .prg-wrap{height:8px;background:#e2e8f0;border-radius:999px;overflow:hidden;margin-bottom:13px}.prg-fill{height:100%;width:0;border-radius:999px;transition:width .3s}.step-table{width:100%;border-collapse:collapse}.step-table th,.step-table td{padding:10px 12px;border-bottom:1px solid var(--border);font-size:12px}.badge{border-radius:999px;padding:4px 8px;font-size:11px;font-weight:700}.page-footer{text-align:center;color:var(--muted);font-size:11px;margin:16px 0 4px}.spin{display:inline-block;animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+  @media(max-width:1100px){.form-grid,.result-hero,.charts-2,.charts-3{grid-template-columns:1fr}.stat-grid{grid-template-columns:1fr}}
+  
+  .page-actions .tb-btn:hover {
+    border-color: var(--orange);
+    color: var(--orange);
+  }
+
+  .page-actions .tb-btn.primary {
+    background: var(--orange);
+    color: #fff;
+    border-color: var(--orange);
+  }
+
+  .page-actions .tb-btn.primary:hover {
+    background: #ea580c;
+  }
+
+  .calc-btn {
+    background: var(--orange);
+  }
+
+  .calc-btn:hover {
+    background: #ea580c;
+  }
+  
+</style>
+
+    <div class="breadcrumb">
+      <a href="{{ url_for('dashboard') }}">⌂ Tableau de bord</a>
+      <span>›</span>
+      <span style="color:var(--orange);font-weight:500">⌁ Euler-Maruyama</span>
+    </div>
+
+    <!-- Formule -->
+    <div class="formula-box">
+      <h4>⌁ SCHÉMA D'EULER-MARUYAMA — DISCRÉTISATION DE L'EDS</h4>
+      <div class="formula-line">dS_t = r·S_t·dt + σ·S_t·dW_t&nbsp;&nbsp;&nbsp;&nbsp;[EDS de Black-Scholes sous Q]</div>
+      <div class="formula-line">S_{t+Δt} ≈ S_t + r·S_t·Δt + σ·S_t·√Δt·Z_j&nbsp;&nbsp;&nbsp;&nbsp;avec Z_j ~ N(0,1) i.i.d.</div>
+      <div class="formula-line">Δt = T/N&nbsp;&nbsp;&nbsp;&nbsp;t_j = j·Δt&nbsp;&nbsp;&nbsp;&nbsp;j = 0, 1, …, N&nbsp;&nbsp;&nbsp;&nbsp;Ŝ_T = S_{t_N}</div>
+      <div class="formula-line">P̂ = e^(−rT) · (1/M) · Σ max(Ŝ_T^(i) − K , 0)&nbsp;&nbsp;&nbsp;&nbsp;[estimateur Euler]</div>
+      <div class="formula-note">
+        <b>Principe :</b> On discrétise la trajectoire continue du sous-jacent en N pas. À chaque pas,
+        on applique le schéma d'Euler : la dérive r·S·Δt et la diffusion σ·S·√Δt·Z.
+        Contrairement à Monte-Carlo classique (solution exacte), Euler introduit un <b>biais de discrétisation</b>
+        qui décroît comme O(Δt) = O(1/N). Plus N est grand, moins le biais est important.
+      </div>
+    </div>
+
+    <!-- Paramètres -->
+    <div class="panel" style="margin-bottom:20px">
+      <div class="panel-hdr">
+        <h3>Paramètres de simulation</h3>
+        <button class="calc-btn" id="calcBtn2" onclick="runSimulation()">▷ Lancer</button>
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Type d'option</label>
+          <select id="optType">
+            <option value="call">Call européen</option>
+            <option value="put">Put européen</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Prix initial S₀</label>
+          <input type="number" id="S0" value="100" min="0.01" step="1">
+        </div>
+        <div class="form-group">
+          <label>Prix d'exercice K</label>
+          <input type="number" id="K" value="100" min="0.01" step="1">
+        </div>
+        <div class="form-group">
+          <label>Taux sans risque r</label>
+          <div class="input-wrap">
+            <input type="number" id="r" value="0.05" min="0" max="1" step="0.005"
+                   oninput="this.nextElementSibling.textContent=Math.round(this.value*100)+'%'">
+            <span class="input-unit">5 %</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Volatilité σ</label>
+          <div class="input-wrap">
+            <input type="number" id="sigma" value="0.20" min="0.01" max="3" step="0.01"
+                   oninput="this.nextElementSibling.textContent=Math.round(this.value*100)+'%'">
+            <span class="input-unit">20 %</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Maturité T (années)</label>
+          <input type="number" id="T" value="1.00" min="0.01" step="0.25">
+        </div>
+        <div class="form-group">
+          <label>Simulations M</label>
+          <div class="input-wrap">
+            <input type="number" id="M" value="10000" min="500" max="100000" step="500"
+                   oninput="document.getElementById('M-disp').textContent=parseInt(this.value).toLocaleString('fr-FR')">
+            <span class="input-unit" id="M-disp" style="font-size:9px">10 000</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Nombre de pas N</label>
+          <div class="input-wrap">
+            <input type="number" id="N" value="252" min="1" max="2000" step="1"
+                   oninput="document.getElementById('N-disp').textContent=parseInt(this.value);document.getElementById('dt-disp').textContent=(parseFloat(document.getElementById('T').value)/parseInt(this.value)).toFixed(5)">
+            <span class="input-unit" id="N-disp" style="font-size:9px">252</span>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;gap:12px;align-items:center;margin-bottom:12px">
+        <div style="flex:1;background:#f8fafc;border-radius:8px;padding:10px 14px;font-size:11px;color:var(--muted)">
+          <b>Δt = T/N =</b> <span id="dt-disp" style="font-family:var(--mono);color:var(--orange);font-weight:600">0.00397</span>
+          &nbsp;·&nbsp; <b>Biais théorique ∝ O(Δt) = O(1/N)</b>
+        </div>
+        <button class="calc-btn" id="calcBtn3" onclick="runSimulation()">▷ Simuler maintenant</button>
+      </div>
+      <div class="info-box">
+        <b>Avantage d'Euler-Maruyama :</b> Simule la trajectoire complète, pas seulement le prix terminal.
+        Utile pour les options path-dependent (asiatiques, barrières).
+        <b>Inconvénient :</b> Biais de discrétisation O(1/N) et temps de calcul plus long que MC classique.
+      </div>
+    </div>
+
+    <!-- Hero -->
+    <div class="result-hero">
+      <div class="hero-card" style="background:var(--orange-bg);border-color:var(--orange-bdr)">
+        <div class="hero-label">Prix Euler-Maruyama</div>
+        <div class="hero-value" style="color:var(--orange)" id="h-em">—</div>
+        <div class="hero-sub" id="h-em-sub">N=252 pas · M=10 000</div>
+      </div>
+      <div class="hero-card" style="background:var(--acc-light);border-color:#bfdbfe">
+        <div class="hero-label">Référence B-S</div>
+        <div class="hero-value" style="color:var(--acc);font-size:20px" id="h-bs">—</div>
+        <div class="hero-sub">Formule analytique</div>
+      </div>
+      <div class="hero-card" style="background:#fef9c3;border-color:#fde68a">
+        <div class="hero-label">Biais de discrétisation</div>
+        <div class="hero-value" style="color:#ca8a04;font-size:20px" id="h-bias">—</div>
+        <div class="hero-sub" id="h-bias-rel">Biais relatif : —</div>
+      </div>
+      <div class="hero-card" style="background:#faf5ff;border-color:#ddd6fe">
+        <div class="hero-label">Δt (pas de temps)</div>
+        <div class="hero-value" style="color:var(--purple);font-size:18px" id="h-dt">—</div>
+        <div class="hero-sub" id="h-n-steps">N = — pas</div>
+      </div>
+      <div class="hero-card" style="background:#ecfeff;border-color:#a5f3fc">
+        <div class="hero-label">Temps de calcul</div>
+        <div class="hero-value" style="color:var(--cyan);font-size:20px" id="h-time">—</div>
+        <div class="hero-sub" id="h-sps">— sim/sec</div>
+      </div>
+    </div>
+
+    <!-- Mid: stats + comparaison -->
+    <div class="charts-2" style="margin-bottom:20px">
+      <div class="panel">
+        <div class="panel-hdr"><h3>Statistiques de simulation</h3></div>
+        <div class="stat-grid">
+          <div class="stat-row"><span class="stat-label">Prix Euler</span><span class="stat-val" id="st-em">—</span></div>
+          <div class="stat-row"><span class="stat-label">Prix Black-Scholes</span><span class="stat-val" id="st-bs">—</span></div>
+          <div class="stat-row"><span class="stat-label">Biais absolu</span><span class="stat-val" id="st-bias">—</span></div>
+          <div class="stat-row"><span class="stat-label">Biais relatif (%)</span><span class="stat-val" id="st-biasrel">—</span></div>
+          <div class="stat-row"><span class="stat-label">Nombre de pas N</span><span class="stat-val" id="st-n">—</span></div>
+          <div class="stat-row"><span class="stat-label">Δt = T/N</span><span class="stat-val" id="st-dt">—</span></div>
+          <div class="stat-row"><span class="stat-label">Simulations M</span><span class="stat-val" id="st-m">—</span></div>
+          <div class="stat-row"><span class="stat-label">Temps de calcul</span><span class="stat-val" id="st-time">—</span></div>
+          <div class="stat-row"><span class="stat-label">% Payoffs > 0 (ITM)</span><span class="stat-val" id="st-itm">—</span></div>
+          <div class="stat-row"><span class="stat-label">Facteur actualisation e^(−rT)</span><span class="stat-val" id="st-df">—</span></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-hdr"><h3>Comparaison BS / MC / Euler</h3></div>
+        <div style="margin-bottom:14px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+            <span style="font-size:12px;font-weight:600;color:var(--acc)">Black-Scholes (référence)</span>
+            <span style="font-family:var(--mono);font-weight:700;color:var(--acc)" id="cmp-bs">—</span>
+          </div>
+          <div class="prg-wrap"><div class="prg-fill" id="prg-bs" style="background:var(--acc)"></div></div>
+
+          <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+            <span style="font-size:12px;font-weight:600;color:var(--green)">Monte-Carlo (ref MC)</span>
+            <span style="font-family:var(--mono);font-weight:700;color:var(--green)" id="cmp-mc">—</span>
+          </div>
+          <div class="prg-wrap"><div class="prg-fill" id="prg-mc" style="background:var(--green)"></div></div>
+
+          <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+            <span style="font-size:12px;font-weight:600;color:var(--orange)">Euler-Maruyama</span>
+            <span style="font-family:var(--mono);font-weight:700;color:var(--orange)" id="cmp-em">—</span>
+          </div>
+          <div class="prg-wrap"><div class="prg-fill" id="prg-em" style="background:var(--orange)"></div></div>
+        </div>
+        <div style="padding:10px 12px;background:#f8fafc;border-radius:8px;font-size:11px;color:var(--muted);line-height:1.8" id="cmp-interp">
+          Lancez la simulation pour afficher la comparaison.
+        </div>
+      </div>
+    </div>
+
+    <!-- 3 charts -->
+    <div class="charts-3">
+      <div class="chart-card">
+        <h4>Trajectoires simulées S_t (échantillon)</h4>
+        <div class="chart-wrap" style="height:200px">
+          <canvas id="chartPaths" role="img" aria-label="Trajectoires simulées du sous-jacent S_t au cours du temps">—</canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <h4>Distribution de Ŝ_T (prix terminaux Euler)</h4>
+        <div class="chart-wrap" style="height:200px">
+          <canvas id="chartST" role="img" aria-label="Distribution des prix terminaux obtenus par le schéma d'Euler-Maruyama">—</canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <h4>Distribution des payoffs</h4>
+        <div class="chart-wrap" style="height:200px">
+          <canvas id="chartPayoffs" role="img" aria-label="Distribution des payoffs simulés par Euler-Maruyama">—</canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sensitivity to N -->
+    <div class="charts-2">
+      <div class="chart-card">
+        <h4>Biais en fonction de N (effet du pas Δt)</h4>
+        <div class="chart-wrap" style="height:200px">
+          <canvas id="chartBiasN" role="img" aria-label="Biais d'Euler-Maruyama en fonction du nombre de pas N">—</canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <h4>Convergence du prix vs N — comparaison BS</h4>
+        <div class="chart-wrap" style="height:200px">
+          <canvas id="chartConvN" role="img" aria-label="Prix Euler-Maruyama en fonction de N comparé à Black-Scholes">—</canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step sensitivity table -->
+    <div class="panel" style="margin-bottom:20px">
+      <div class="panel-hdr"><h3>Sensibilité au nombre de pas N — tableau comparatif</h3></div>
+      <table class="step-table">
+        <thead>
+          <tr>
+            <th>N (pas)</th><th>Δt</th><th>Prix Euler</th>
+            <th>Prix B-S</th><th>Biais absolu</th><th>Biais relatif</th><th>Qualité</th>
+          </tr>
+        </thead>
+        <tbody id="stepTableBody"></tbody>
+      </table>
+    </div>
+
+    <div class="page-footer">
+      Schéma d'Euler-Maruyama (1955) — Discrétisation de l'EDS de Black-Scholes · Biais de discrétisation O(Δt) = O(1/N) · Jourdain (2012)
+    </div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+/* ── Math ── */
+function normCDF(x){ return OPL.normCDF(x); }
+function randn(){
+  const u1=Math.random(),u2=Math.random();
+  return Math.sqrt(-2*Math.log(u1))*Math.cos(2*Math.PI*u2);
+}
+function bsPrice(S,K,r,sig,T,type){
+  const d1=(Math.log(S/K)+(r+0.5*sig*sig)*T)/(sig*Math.sqrt(T));
+  const d2=d1-sig*Math.sqrt(T);
+  if(type==='call') return S*normCDF(d1)-K*Math.exp(-r*T)*normCDF(d2);
+  return K*Math.exp(-r*T)*normCDF(-d2)-S*normCDF(-d1);
+}
+
+/* ── Euler-Maruyama core ── */
+function eulerMaruyama(S,K,r,sig,T,M,N,type,storePaths){
+  const dt=T/N, sqrtDt=Math.sqrt(dt), df=Math.exp(-r*T);
+  let sum=0, itmCount=0;
+  const STs=[], paths=[];
+  const simM=Math.min(M,6000);
+  for(let i=0;i<simM;i++){
+    let St=S;
+    const pathArr=storePaths&&i<8?[S]:null;
+    for(let j=0;j<N;j++){
+      St=St+r*St*dt+sig*St*sqrtDt*randn();
+      if(St<0) St=0;
+      if(pathArr) pathArr.push(St);
+    }
+    const pf=type==='call'?Math.max(St-K,0):Math.max(K-St,0);
+    sum+=pf;
+    if(pf>0) itmCount++;
+    if(i<1500) STs.push(St);
+    if(pathArr) paths.push(pathArr);
+  }
+  const price=(sum/simM)*df;
+  return{price,df,itmCount,simM,STs,paths};
+}
+
+/* ── Monte-Carlo for comparison ── */
+function mcPrice(S,K,r,sig,T,M,type){
+  const sqrtT=Math.sqrt(T),df=Math.exp(-r*T),drift=(r-0.5*sig*sig)*T;
+  let sum=0;
+  const cap=Math.min(M,3000);
+  for(let i=0;i<cap;i++){
+    const ST=S*Math.exp(drift+sig*sqrtT*randn());
+    sum+=(type==='call'?Math.max(ST-K,0):Math.max(K-ST,0));
+  }
+  return(sum/cap)*df;
+}
+
+/* ── State ── */
+let charts={}, lastRes=null, lastP=null;
+function P(){
+  return{
+    type:document.getElementById('optType').value,
+    S:parseFloat(document.getElementById('S0').value)||100,
+    K:parseFloat(document.getElementById('K').value)||100,
+    r:parseFloat(document.getElementById('r').value)||0.05,
+    sig:parseFloat(document.getElementById('sigma').value)||0.20,
+    T:parseFloat(document.getElementById('T').value)||1,
+    M:parseInt(document.getElementById('M').value)||10000,
+    N:parseInt(document.getElementById('N').value)||252
+  };
+}
+function fmt(v,d){d=d!=null?d:4;return v==null?'—':v.toFixed(d);}
+
+/* ── Run ── */
+function runSimulation(){
+  const btns=[document.getElementById('runBtn'),document.getElementById('calcBtn2'),document.getElementById('calcBtn3')];
+  btns.forEach(b=>{b.disabled=true;});
+  document.getElementById('runBtn').innerHTML='<span class="spin">⟳</span> Simulation…';
+
+  setTimeout(()=>{
+    const p=P();
+    const t0=performance.now();
+    const res=eulerMaruyama(p.S,p.K,p.r,p.sig,p.T,p.M,p.N,p.type,true);
+    const elapsed=(performance.now()-t0)/1000;
+    const bs=bsPrice(p.S,p.K,p.r,p.sig,p.T,p.type);
+    const mc=mcPrice(p.S,p.K,p.r,p.sig,p.T,p.M,p.type);
+    const bias=res.price-bs;
+    const biasRel=bs>0?Math.abs(bias)/bs*100:0;
+
+    lastRes={...res,bs,mc,bias,biasRel,elapsed};
+    lastP=p;
+
+    updateHero(res,bs,bias,biasRel,elapsed,p);
+    updateStats(res,bs,bias,biasRel,elapsed,p,mc);
+    buildCharts(res,p,bs);
+    buildNSensitivity(p,bs);
+    buildStepTable(p,bs);
+
+    btns.forEach(b=>b.disabled=false);
+    document.getElementById('runBtn').innerHTML='▷ Simuler';
+    toast('✓ Simulation Euler-Maruyama terminée — N='+p.N+' pas — Prix='+fmt(res.price,4));
+  },20);
+}
+
+/* ── Hero ── */
+function updateHero(res,bs,bias,biasRel,elapsed,p){
+  document.getElementById('h-em').textContent=fmt(res.price,4);
+  document.getElementById('h-em-sub').textContent='N='+p.N+' pas · M='+p.M.toLocaleString('fr-FR');
+  document.getElementById('h-bs').textContent=fmt(bs,4);
+  document.getElementById('h-bias').textContent=fmt(Math.abs(bias),4);
+  document.getElementById('h-bias-rel').textContent='Biais relatif : '+fmt(biasRel,2)+'%';
+  const dt=p.T/p.N;
+  document.getElementById('h-dt').textContent=dt.toFixed(5);
+  document.getElementById('h-n-steps').textContent='N = '+p.N+' pas';
+  document.getElementById('h-time').textContent=elapsed.toFixed(3)+'s';
+  document.getElementById('h-sps').textContent=(p.M/elapsed).toFixed(0)+' sim/sec';
+}
+
+/* ── Stats ── */
+function updateStats(res,bs,bias,biasRel,elapsed,p,mc){
+  document.getElementById('st-em').textContent=fmt(res.price,6);
+  document.getElementById('st-bs').textContent=fmt(bs,6);
+  document.getElementById('st-bias').textContent=fmt(Math.abs(bias),6);
+  document.getElementById('st-biasrel').textContent=fmt(biasRel,4)+'%';
+  document.getElementById('st-n').textContent=p.N;
+  document.getElementById('st-dt').textContent=(p.T/p.N).toFixed(6);
+  document.getElementById('st-m').textContent=p.M.toLocaleString('fr-FR');
+  document.getElementById('st-time').textContent=elapsed.toFixed(4)+'s';
+  document.getElementById('st-itm').textContent=fmt(res.itmCount/res.simM*100,1)+'%';
+  document.getElementById('st-df').textContent=fmt(res.df,6);
+
+  const maxP=Math.max(bs,mc,res.price);
+  document.getElementById('cmp-bs').textContent=fmt(bs,4);
+  document.getElementById('cmp-mc').textContent=fmt(mc,4);
+  document.getElementById('cmp-em').textContent=fmt(res.price,4);
+  document.getElementById('prg-bs').style.width='100%';
+  document.getElementById('prg-mc').style.width=(mc/maxP*100).toFixed(1)+'%';
+  document.getElementById('prg-em').style.width=(res.price/maxP*100).toFixed(1)+'%';
+  document.getElementById('cmp-interp').innerHTML=
+    `<b>B-S = ${fmt(bs,4)}</b> (référence exacte)<br>
+     <b>MC = ${fmt(mc,4)}</b> — erreur abs. vs B-S = <b>${fmt(Math.abs(mc-bs),4)}</b><br>
+     <b>Euler = ${fmt(res.price,4)}</b> — biais abs. = <b>${fmt(Math.abs(bias),4)}</b> (${fmt(biasRel,3)}%)<br>
+     Biais Euler > erreur MC : ${Math.abs(bias)>Math.abs(mc-bs)?'<b style="color:var(--orange)">Oui — augmentez N</b>':'<b style="color:var(--green)">Non — N suffisant</b>'}`;
+}
+
+/* ── Charts ── */
+const GRID='#f1f5f9';
+function mkChart(id,type,data,opts){
+  const el=document.getElementById(id);
+  if(charts[id]) charts[id].destroy();
+  charts[id]=new Chart(el,{type,data,options:{responsive:true,maintainAspectRatio:false,animation:{duration:450},...opts}});
+}
+const baseScales=(ex)=>({
+  x:{ticks:{maxTicksLimit:8,font:{size:9}},grid:{color:GRID},...(ex&&ex.x||{})},
+  y:{ticks:{font:{size:9}},grid:{color:GRID},...(ex&&ex.y||{})}
+});
+
+function makeHist(data,bins){
+  const mn=Math.min(...data),mx=Math.max(...data);
+  const w=(mx-mn)/bins||1;
+  const counts=Array(bins).fill(0);
+  const labels=[];
+  for(let i=0;i<bins;i++) labels.push((mn+i*w+w/2).toFixed(1));
+  data.forEach(v=>{const idx=Math.min(Math.floor((v-mn)/w),bins-1);counts[idx]++;});
+  return{labels,counts};
+}
+
+function buildCharts(res,p,bs){
+  const BINS=30;
+  const timeLabels=Array.from({length:Math.min(p.N,50)+1},(_,i)=>
+    (i*p.T/Math.min(p.N,50)).toFixed(2));
+
+  /* Trajectoires */
+  const pathColors=['#f97316','#2563eb','#16a34a','#7c3aed','#0891b2','#dc2626','#ca8a04','#db2777'];
+  const pathDatasets=res.paths.slice(0,6).map((path,i)=>{
+    const step=Math.max(1,Math.floor(path.length/51));
+    const sampled=path.filter((_,idx)=>idx%step===0).slice(0,51);
+    return{
+      label:'Trajectoire '+(i+1),
+      data:sampled,
+      borderColor:pathColors[i],
+      borderWidth:1.2,
+      pointRadius:0,
+      tension:.2,
+      fill:false
+    };
+  });
+  if(pathDatasets.length===0){
+    pathDatasets.push({label:'—',data:[p.S],borderColor:'#f97316',borderWidth:1.5,pointRadius:0});
+  }
+  mkChart('chartPaths','line',
+    {labels:timeLabels,datasets:pathDatasets},
+    {plugins:{legend:{display:false}},
+     scales:{
+       x:{ticks:{maxTicksLimit:6,font:{size:9}},grid:{color:GRID},title:{display:true,text:'t (années)',font:{size:10}}},
+       y:{ticks:{font:{size:9}},grid:{color:GRID},title:{display:true,text:'S_t',font:{size:10}}}
+     }});
+
+  /* Hist ST */
+  const hST=makeHist(res.STs,BINS);
+  mkChart('chartST','bar',
+    {labels:hST.labels,
+     datasets:[{data:hST.counts,backgroundColor:'rgba(249,115,22,.55)',borderColor:'rgba(249,115,22,.85)',borderWidth:1,borderRadius:3}]},
+    {plugins:{legend:{display:false}},
+     scales:{x:{ticks:{maxTicksLimit:7,font:{size:9}},grid:{color:GRID},title:{display:true,text:'Ŝ_T',font:{size:10}}},
+             y:{ticks:{font:{size:9}},grid:{color:GRID}}}});
+
+  /* Payoffs */
+  const payoffs=res.STs.map(s=>p.type==='call'?Math.max(s-p.K,0):Math.max(p.K-s,0));
+  const posPf=payoffs.filter(v=>v>0);
+  if(posPf.length>5){
+    const hPF=makeHist(posPf,BINS);
+    mkChart('chartPayoffs','bar',
+      {labels:hPF.labels,
+       datasets:[{data:hPF.counts,backgroundColor:'rgba(124,58,237,.5)',borderColor:'rgba(124,58,237,.8)',borderWidth:1,borderRadius:3}]},
+      {plugins:{legend:{display:false}},
+       scales:{x:{ticks:{maxTicksLimit:7,font:{size:9}},grid:{color:GRID}},y:{ticks:{font:{size:9}},grid:{color:GRID}}}});
+  } else {
+    mkChart('chartPayoffs','bar',
+      {labels:['0 (OTM dominant)'],datasets:[{data:[payoffs.length],backgroundColor:'rgba(124,58,237,.4)',borderRadius:3}]},
+      {plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:10}}},y:{ticks:{font:{size:9}}}}});
+  }
+}
+
+/* ── N sensitivity charts ── */
+function buildNSensitivity(p,bs){
+  const Nvals=[5,10,20,50,100,252,500,1000];
+  const prices=[],biases=[];
+  Nvals.forEach(n=>{
+    const res=eulerMaruyama(p.S,p.K,p.r,p.sig,p.T,Math.min(p.M,2000),n,p.type,false);
+    prices.push(res.price);
+    biases.push(Math.abs(res.price-bs));
+  });
+  const labels=Nvals.map(n=>n.toString());
+
+  mkChart('chartBiasN','line',
+    {labels,datasets:[
+      {label:'Biais |Euler − BS|',data:biases,borderColor:'#f97316',borderWidth:2,pointRadius:4,tension:.3,fill:true,backgroundColor:'rgba(249,115,22,.08)'},
+      {label:'Courbe O(1/N)',data:Nvals.map((n,i)=>biases[0]*Nvals[0]/n),borderColor:'rgba(37,99,235,.5)',borderWidth:1.5,borderDash:[5,4],pointRadius:0,fill:false}
+    ]},
+    {plugins:{legend:{display:true,labels:{font:{size:9},boxWidth:10}}},
+     scales:{
+       x:{ticks:{font:{size:9}},grid:{color:GRID},title:{display:true,text:'N (pas)',font:{size:10}}},
+       y:{ticks:{font:{size:9},callback:v=>v.toFixed(3)},grid:{color:GRID},title:{display:true,text:'Biais',font:{size:10}}}
+     }});
+
+  mkChart('chartConvN','line',
+    {labels,datasets:[
+      {label:'Prix Euler',data:prices,borderColor:'#f97316',borderWidth:2,pointRadius:4,tension:.3},
+      {label:'B-S exact',data:Nvals.map(()=>bs),borderColor:'#2563eb',borderWidth:1.5,borderDash:[5,4],pointRadius:0}
+    ]},
+    {plugins:{legend:{display:true,labels:{font:{size:9},boxWidth:10}}},
+     scales:{
+       x:{ticks:{font:{size:9}},grid:{color:GRID},title:{display:true,text:'N (pas)',font:{size:10}}},
+       y:{ticks:{font:{size:9},callback:v=>v.toFixed(3)},grid:{color:GRID}}
+     }});
+}
+
+/* ── Step table ── */
+function buildStepTable(p,bs){
+  const Nvals=[5,10,20,50,100,252,500,1000];
+  const tbody=document.getElementById('stepTableBody');
+  tbody.innerHTML='';
+  Nvals.forEach(n=>{
+    const res=eulerMaruyama(p.S,p.K,p.r,p.sig,p.T,Math.min(p.M,2000),n,p.type,false);
+    const bias=Math.abs(res.price-bs);
+    const biasRel=bs>0?bias/bs*100:0;
+    const isBase=n===p.N;
+    const qual=biasRel<0.1?'Excellent':biasRel<0.5?'Bon':biasRel<2?'Acceptable':'Faible';
+    const qualColor=biasRel<0.1?'var(--green)':biasRel<0.5?'var(--acc)':biasRel<2?'var(--orange)':'var(--red)';
+    tbody.innerHTML+=`<tr>
+      <td><span class="badge" style="background:${isBase?'#fff7ed':'#f1f5f9'};color:${isBase?'#9a3412':'#374151'}">${n}${isBase?' *':''}</span></td>
+      <td>${(p.T/n).toFixed(5)}</td>
+      <td style="color:var(--orange);font-weight:600">${fmt(res.price,4)}</td>
+      <td style="color:var(--acc)">${fmt(bs,4)}</td>
+      <td>${fmt(bias,4)}</td>
+      <td>${fmt(biasRel,3)}%</td>
+      <td><span class="badge" style="background:${qualColor}22;color:${qualColor}">${qual}</span></td>
+    </tr>`;
+  });
+}
+
+/* ── Export CSV ── */
+function exportCSV(){
+  if(!lastRes){toast('! Lancez d\'abord la simulation !');return;}
+  const r=lastRes,p=lastP;
+  const rows=[
+    ['Euler-Maruyama — Résultats'],
+    ['Paramètre','Valeur'],
+    ['Type',p.type],['S0',p.S],['K',p.K],['r',p.r],['sigma',p.sig],['T',p.T],['M',p.M],['N',p.N],
+    [],['Résultat','Valeur'],
+    ['Prix Euler',r.price.toFixed(6)],['Prix BS (ref)',r.bs.toFixed(6)],
+    ['Biais absolu',Math.abs(r.bias).toFixed(6)],['Biais relatif (%)',r.biasRel.toFixed(4)],
+    ['Delta t',(p.T/p.N).toFixed(8)],['Facteur actualisation',r.df.toFixed(6)],
+    ['% ITM',(r.itmCount/r.simM*100).toFixed(2)+'%'],
+    ['Temps calcul',r.elapsed.toFixed(4)+'s']
+  ].map(r=>r.join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([rows],{type:'text/csv'}));
+  a.download='euler_maruyama_results.csv'; a.click();
+  toast('✓ CSV téléchargé.');
+}
+
+
+/* ── Init ── */
+runSimulation();
+</script>
+{% endblock %}

@@ -1,0 +1,10 @@
+<header class="topbar">
+  <div class="topbar-left">
+    <h1>{{ title or 'Tableau de bord' }}</h1>
+    <p>{{ subtitle or 'Pricing des options européennes' }}</p>
+  </div>
+  <div class="topbar-right">
+    <button class="tb-btn" onclick="toast('Aide : saisissez les paramètres puis cliquez sur Mettre à jour.')">? Aide</button>
+    <button class="tb-btn" onclick="window.location.href='{{ url_for('export_page') }}'">⚙ Export</button>
+  </div>
+</header>
