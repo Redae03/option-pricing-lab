@@ -2,7 +2,7 @@
 
 Application web Flask de valorisation d'options européennes, réalisée par **Reda Erraoui** (ENSA Agadir, filière Finance et Ingénierie Décisionnelle) sous l'encadrement de Pr. B. El Asri.
 
-**[Démonstration en ligne](https://redae03.github.io/#simulateur-opl)** · **[Lire le rapport (PDF)](rapport.pdf)**
+**[Démonstration en ligne](https://redaerraoui.github.io/simulateurs/option-pricing-lab.html)** · **[Lire le rapport (PDF)](rapport.pdf)**
 
 ## Méthodes comparées
 
@@ -69,4 +69,4 @@ Puis ouvrir http://127.0.0.1:5000. Au premier calcul, le modèle ML est entraîn
 
 ## Contact
 
-Reda Erraoui · [Portfolio](https://redae03.github.io) · redaerraouie@gmail.com
+Reda Erraoui · [Portfolio](https://redaerraoui.github.io) · redaerraouie@gmail.com
